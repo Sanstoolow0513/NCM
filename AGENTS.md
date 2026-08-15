@@ -6,13 +6,13 @@
 
 这是一个 **HarmonyOS（鸿蒙）第三方网易云音乐（NCM）客户端**，使用 ArkTS + ArkUI 开发，Stage 模型（`apiType: "stageMode"`）。
 
-- 包名：`com.example.ncm`（见 `AppScope/app.json5`），当前为模板默认值，版本 `1.0.0`
+- 包名：`sanstoolow.netesohm.huawei`（见 `AppScope/app.json5`），版本 `1.0.0`
 - SDK：`targetSdkVersion` / `compatibleSdkVersion` 均为 `6.1.1(24)`（API 24），`runtimeOS: HarmonyOS`
 - 设备类型：仅 `phone`
 - 界面语言：中文；代码注释主要使用中文，新增注释请保持一致
 - 只有一个模块：`entry`（`build-profile.json5`）
 
-应用功能：发现（Banner、日推入口、热门歌单）、搜索、日推（每日推荐歌曲）、"我的"歌单、歌单/专辑详情、扫码/账号登录、完整播放器（封面模糊沉浸背景、歌词滚动、循环模式、迷你播放器）、主题设置（浅色/深色/跟随系统）。音频播放声明了 `backgroundModes: audioPlayback` 与 `KEEP_BACKGROUND_RUNNING` 权限，支持后台播放。
+应用功能：发现（顶栏搜索 + 日推入口卡与预览歌曲，点击进入完整日推）、日推（每日推荐歌曲）、"我的"歌单、歌单/专辑详情、扫码/账号登录、完整播放器（封面模糊沉浸背景、歌词滚动、循环模式、迷你播放器、播放队列）、设置（浅色/深色/跟随系统、字号、字体）。音频播放声明了 `backgroundModes: audioPlayback` 与 `KEEP_BACKGROUND_RUNNING` 权限，支持后台播放。
 
 ## 技术栈
 
@@ -36,17 +36,18 @@
 
 分层为 MVVM，单向依赖：`view → viewmodel → model(repository) → model(source)`，全局状态在 `store`，播放服务在 `service`。
 
-- `entryability/EntryAbility.ets`：入口 Ability。`onWindowStageCreate` 中初始化 `NcmHttp`、`PlayerService`，启动时若已登录则校验登录态
-- `pages/Index.ets`：唯一 `@Entry` 页面（路由见 `resources/base/profile/main_pages.json`）。底部 `HdsTabs`（发现 / 搜索 / 我的）+ `Navigation`/`NavPathStack` 栈式导航 + 全局 `MiniPlayer` 悬浮层
+- `entryability/EntryAbility.ets`：入口 Ability。`onWindowStageCreate` 中初始化 `NcmHttp`、`PlayerService`，窗口就绪后 `StoreHub.markFontReady()` 应用字体，启动时若已登录则校验登录态
+- `pages/Index.ets`：唯一 `@Entry` 页面（路由见 `resources/base/profile/main_pages.json`）。底部 `HdsTabs`（发现 / 我的）+ `Navigation`/`NavPathStack` 栈式导航 + 全局 `MiniPlayer` 悬浮层；`ChromeInsets` 负责底部避让
 - `common/router/`：路由常量（`RouteName`）与参数类型（`RouteParams`），新增页面路由在此登记并在 `Index.ets` 的 `PageMap` 中映射
-- `common/utils/format.ets`：格式化与公共 UI 常量/设计 token（颜色如 `PAGE_BG`、`ACCENT_SOFT`，圆角 `RADIUS_*`、间距 `SPACE_*`、页面边距 `PAGE_PAD`、`NAV_INDICATOR_PAD`）
+- `common/utils/format.ets`：格式化与公共 UI 常量/设计 token（颜色如 `PAGE_BG`、`ACCENT_SOFT`，圆角 `RADIUS_*`、间距 `SPACE_*`、页面边距 `PAGE_PAD`、`NAV_INDICATOR_PAD`、`TAB_BAR_HEIGHT`）
+- `common/utils/ChromeInsets.ets`：底部沉浸层占位（系统导航条、Tab 栏、迷你播放条）
 - `model/source/`：网络底层——`NcmHttp.ets`（统一 POST 入口、Cookie/csrf 管理）、`crypto.ets`（weapi/eapi 加密）、`cookiejar.ets`（Cookie 持久化）、`NcmParsers.ets`、`json.ets`
 - `model/repository/`：业务接口层——`AuthRepository`（登录）、`CatalogRepository`（歌单/专辑）、`MediaRepository`（歌曲 URL/歌词）、`SearchRepository`（搜索）。均为单例（`XxxRepository.get()`）
 - `model/entity/models.ets`：数据模型与歌词解析。DTO 是普通 class，**不加** `@ObservedV2`，UI 通过整引用替换刷新
 - `store/`：全局状态。`StoreHub` 统一入口：`player()` / `session()` 用 `AppStorageV2.connect`，`theme()` 用 `PersistenceV2.connect`（持久化）。`PlayerSnapshot`、`SessionSnapshot`、`ThemeSettings` 为 `@ObservedV2` 快照类
 - `service/player/`：`PlayerService`（AVPlayer 封装 + 播放队列 + 循环模式 + 失败跳转保护）、`AvSessionManager`（媒体会话/控制中心）
-- `view/pages/`：各页面组件（`DiscoverPage`（首页：Banner + 日推 Hero + 热门歌单）、`SearchPage`（纯搜索）、`MinePage`（用户卡 + 歌单货架）、`DailySongsPage`、`PlaylistDetailPage`、`PlayerPage`、`SettingsPage`）
-- `view/components/`：复用组件（`MiniPlayer`、`SongRow`、`PlaylistShelf`（歌单横滑货架）、`LoginPanel`）
+- `view/pages/`：各页面组件（`DiscoverPage`（顶栏搜索 + 日推入口卡与预览歌曲）、`MinePage`（用户行 + 纵向歌单列表）、`DailySongsPage`、`PlaylistDetailPage`、`PlayerPage`、`SettingsPage`）
+- `view/components/`：复用组件（`MiniPlayer`、`SongRow`、`PlaylistRow`、`SearchResultPanel`、`QueuePanel`、`LoginPanel`）
 - `viewmodel/`：每页一个 ViewModel（`@ObservedV2` + `@Trace`），页面持有的状态与业务调用都在这一层
 
 ## 编码约定
@@ -59,9 +60,27 @@
 - `build-profile.json5` 开启了 `strictMode`（`caseSensitiveCheck`、`useNormalizedOHMUrl`），import 路径大小写必须与实际文件一致
 - **记忆（用户偏好）**：界面与新增代码遵循鸿蒙现代化设计风格——优先使用 `@kit.UIDesignKit`（HDS）组件与 ArkUI 规范，遵循鸿蒙设计语言（充足留白、统一圆角、分层模糊/材质感、一致的间距与自然动效），不要引入与系统风格冲突的自绘样式
 
+## Agent Skills
+
+官方仓是 [HarmonyOS_Skills/harmonyos-agent-skills](https://gitcode.com/HarmonyOS_Skills/harmonyos-agent-skills)。本仓库**只装与现有工程重合的子集**，不要 `devecocli skills add --all`。Cursor 实际从 `.agents/skills` 加载；`.cursor/skills` 与 `.kimi-code/skills` 保持同一套。只装项目级，不要装到 `~/.cursor/skills`。
+
+| 技能 | 何时加载 | 本仓库约束 |
+|------|----------|------------|
+| `deveco-cli` | 构建、运行、设备、文档、lint、MCP | 优先 `devecocli`，不要直接调 hvigor/hdc |
+| `hmos-arkui-develop-skill` | 写/改 ArkUI 页面与组件 | Step 2.1 已改为不调用未上架的 `hmos-arkui-scenario-development`；`-f` 重装会冲掉该修改 |
+| `hmos-arkui-knowledge-retriever` | 查 ArkUI API / 装饰器 / 错误码 | 只检索，不写代码 |
+| `hmos-arkts-knowledge-retriever` | 查非 UI 的 ArkTS 语法与标准库 | 只检索，不写代码 |
+| `hmos-arkui-mvvm-pattern` | 分层、状态归属、MVVM 整改 | 维持 V2；全局状态继续走 `StoreHub`（AppStorageV2 / PersistenceV2），不要按技能示例拆掉 |
+| `hmos-arkui-longtake-transition` | 改迷你条↔全屏播放器转场 | 播放器已用系统 `geometryTransition`（`PLAYER_COVER_GEOMETRY_ID`）+ `bindContentCover`。只吸收交互/时序原则，**禁止**引入 `@hmanimations/ezcustomtransition`，禁止重写已工作的封面共享元素 |
+| `hmos-multidevice-avoid-areas` | 改 `ChromeInsets`、沉浸播放页、系统栏/挖孔/键盘避让 | 仅 phone；避让以 `ChromeInsets` 为单一来源，不要平行再做一套 safe area，不要引入折叠屏/多窗方案 |
+| `hmos-local-test` | 写/跑 ArkTS 单元测试（Local Test） | 测试代码放 `entry/src/ohosTest/`，框架 Hypium（`describe/it/expect`）；本仓库尚无用例，新增时再写，不要为装技能而空跑 |
+| `hmos-instrument-test` | 写/跑仪器测试（真机或模拟器上的集成测试） | 同上目录与框架；本应用无 C++，不要按技能去加 Native/ASan 流程 |
+
+明确不装（与本应用无关或会带偏）：V1→V2 迁移、多设备总入口/折叠/外设、华为账号一键登录、Scan Kit（登录二维码是网易云 `QRCode` 展示给官方 App 扫，不是本机扫码）、Push/实况窗、元服务/ASCF、Native 崩溃分析。需要时再按任务临时加，不要预装。
+
 ## 测试
 
-- 已配置测试基建但**尚无测试代码**：`entry/build-profile.json5` 声明了 `ohosTest` target，`@ohos/hypium` / `@ohos/hamock` 已在 devDependencies。新增单元/仪器测试放在 `entry/src/ohosTest/`（框架为 Hypium，风格为 `describe/it/expect`）
+- 已配置测试基建但**尚无测试代码**：`entry/build-profile.json5` 声明了 `ohosTest` target，`@ohos/hypium` / `@ohos/hamock` 已在 devDependencies。新增单元测试走 `hmos-local-test`，仪器测试走 `hmos-instrument-test`；代码放在 `entry/src/ohosTest/`（框架为 Hypium，风格为 `describe/it/expect`）
 - `code-linter.json5` 的 ignore 已排除 `ohosTest`、`test`、`mock` 目录
 - 当前验证主要靠构建通过 + 真机/模拟器运行
 
@@ -71,4 +90,4 @@
 - 请求全部发往 `music.163.com` / `interface.music.163.com`，UA 伪装为 iPhone 客户端；改动网络层需保持 weapi/eapi 加密协议与 header 伪装一致，否则接口会被拒
 - 权限仅 `INTERNET` 与 `KEEP_BACKGROUND_RUNNING`（`module.json5`），新增权限需同步更新该文件
 - `oh_modules/`、`build/`、`.hvigor/` 等目录已 gitignore，不要提交
-- 本目录尚未初始化为 git 仓库；若日后初始化，提交信息建议用中文、简明描述改动
+- 提交信息用中文、简明描述改动原因

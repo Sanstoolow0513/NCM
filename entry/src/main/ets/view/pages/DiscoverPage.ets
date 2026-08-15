@@ -1,28 +1,31 @@
 /**
  * 发现页
- * Banner 轮播 + 每日推荐 Hero 卡 + 热门歌单网格，作为应用首页内容
+ * 顶栏搜索固定，下方滚动区放日推卡片（封面模糊头图 + 预览歌曲）
  */
-import { BannerInfo, SongInfo, SongListInfo } from '../../model/entity/models';
-import { DiscoverViewModel } from '../../viewmodel/DiscoverViewModel';
+import { SongInfo } from '../../model/entity/models';
 import { DailySongsViewModel } from '../../viewmodel/DailySongsViewModel';
+import { SearchViewModel } from '../../viewmodel/SearchViewModel';
 import { StoreHub } from '../../store/StoreHub';
 import { SessionSnapshot } from '../../store/SessionSnapshot';
 import { RouteName } from '../../common/router/RouteName';
-import { PlaylistRouteParam } from '../../common/router/RouteParams';
+import { ChromeInsets } from '../../common/utils/ChromeInsets';
+import { SongRow } from '../components/SongRow';
+import { SearchResultPanel } from '../components/SearchResultPanel';
 import {
-  ACCENT_COLOR, CARD_BG, COVER_PLACEHOLDER, ON_ACCENT, PAGE_BG, PAGE_PAD, RADIUS_L, RADIUS_M, RADIUS_XL, SPACE_L,
-  SPACE_M, SPACE_S, TEXT_PRIMARY, TEXT_SECONDARY
-} from '../../common/utils/format';@ComponentV2
+  ACCENT_COLOR, CARD_BG, ON_ACCENT, PAGE_BG, PAGE_PAD, RADIUS_L, SPACE_L, SPACE_M,
+  SPACE_S, TEXT_PRIMARY, TEXT_SECONDARY
+} from '../../common/utils/format';
+
+@ComponentV2
 export struct DiscoverPage {
   @Consumer('navStack') navStack: NavPathStack = new NavPathStack();
-  @Local vm: DiscoverViewModel = new DiscoverViewModel();
+  @Consumer('chromeInsets') chrome: ChromeInsets = new ChromeInsets();
   @Local dailyVm: DailySongsViewModel = new DailySongsViewModel();
+  @Local searchVm: SearchViewModel = new SearchViewModel();
   @Local session: SessionSnapshot = StoreHub.session();
   @Local todayDay: string = new Date().getDate().toString();
-  @Local heroIndex: number = 0;
 
   aboutToAppear(): void {
-    this.vm.load();
     this.loadDailyIfLoggedIn();
   }
 
@@ -34,10 +37,11 @@ export struct DiscoverPage {
     }
   }
 
-  @Monitor('dailyVm.loading')
-  onDailyLoading(_mon: IMonitor): void {
-    if (!this.dailyVm.loading) {
-      this.heroIndex = 0;
+  @Monitor('searchVm.toastMessage')
+  onSearchToast(_mon: IMonitor): void {
+    if (this.searchVm.toastMessage.length > 0) {
+      this.getUIContext().getPromptAction().showToast({ message: this.searchVm.toastMessage });
+      this.searchVm.toastMessage = '';
     }
   }
 
@@ -56,134 +60,56 @@ export struct DiscoverPage {
     }
   }
 
-  private openPlaylist(listId: number): void {
-    const param: PlaylistRouteParam = { listId: listId, isAlbum: false };
-    this.navStack.pushPath({ name: RouteName.PLAYLIST_DETAIL, param: param });
-  }
-
   private openDailySongs(): void {
     this.navStack.pushPath({ name: RouteName.DAILY_SONGS });
   }
 
-  private heroCoverSrc(song: SongInfo): string {
-    if (song.picUrl.length > 0) {
-      return `${song.picUrl}?param=500y500`;
-    }
-    return '';
-  }
-
-  private heroSongLabel(): string {
-    if (this.dailyVm.heroSongs.length === 0) {
+  private heroSubtitle(): string {
+    if (this.dailyVm.songs.length === 0) {
       return '根据你的音乐口味每日更新';
     }
-    const idx: number = this.heroIndex < this.dailyVm.heroSongs.length ? this.heroIndex : 0;
-    const song: SongInfo = this.dailyVm.heroSongs[idx];
-    return `${song.name} · ${song.singer}`;
+    return `今日推荐 · ${this.dailyVm.songs.length} 首`;
   }
 
-  @Builder
-  DailyHeroCard() {
-    Stack({ alignContent: Alignment.BottomStart }) {
-      if (this.dailyVm.heroSongs.length > 0) {
-        Swiper() {
-          ForEach(this.dailyVm.heroSongs, (song: SongInfo, songIndex: number) => {
-            Image(this.heroCoverSrc(song))
-              .width('100%')
-              .height('100%')
-              .objectFit(ImageFit.Cover)
-              .onClick(() => {
-                this.dailyVm.playAt(songIndex);
-              })
-          }, (song: SongInfo) => song.id.toString())
-        }
-        .autoPlay(this.dailyVm.heroSongs.length > 1)
-        .interval(4000)
-        .loop(this.dailyVm.heroSongs.length > 1)
-        .indicator(false)
-        .onChange((index: number) => {
-          this.heroIndex = index;
-        })
-        .width('100%')
-        .height('100%')
-      } else {
-        Column() {
-        }
-        .width('100%')
-        .height('100%')
-        .backgroundColor(ACCENT_COLOR)
-      }
+  private weekday(): string {
+    const names: string[] = ['日', '一', '二', '三', '四', '五', '六'];
+    return `周${names[new Date().getDay()]}`;
+  }
 
-      // 底部毛玻璃信息条
-      Row() {
-        Column() {
-          Text(this.todayDay)
-            .fontSize(24)
-            .fontWeight(FontWeight.Bold)
-            .fontColor(Color.White)
-          Text('日')
-            .fontSize(11)
-            .fontColor(Color.White)
-            .margin({ top: 1 })
-        }
-        .width(48)
-        .height(48)
-        .borderRadius(14)
-        .backgroundColor(ACCENT_COLOR)
-        .justifyContent(FlexAlign.Center)
-
-        Column() {
-          Text('每日推荐')
-            .fontSize(18)
-            .fontWeight(FontWeight.Medium)
-            .fontColor(Color.White)
-          Text(this.heroSongLabel())
-            .fontSize(12)
-            .fontColor(Color.White)
-            .maxLines(1)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .margin({ top: 4 })
-        }
-        .layoutWeight(1)
-        .alignItems(HorizontalAlign.Start)
-        .margin({ left: SPACE_M, right: SPACE_M })
-
-        Button({ type: ButtonType.Circle }) {
-          SymbolGlyph($r('sys.symbol.play_fill'))
-            .fontSize(20)
-            .fontColor([ON_ACCENT])
-        }
-        .width(48)
-        .height(48)
-        .backgroundColor(ACCENT_COLOR)
-        .onClick(() => {
-          this.dailyVm.playAll();
-        })
-      }
-      .width('100%')
-      .padding(SPACE_L)
-      .backgroundColor('#33000000')
-      .backgroundBlurStyle(BlurStyle.Regular)
+  private heroCover(): string {
+    if (this.dailyVm.previewSongs.length === 0) {
+      return '';
     }
-    .width('100%')
-    .height(220)
-    .borderRadius(RADIUS_XL)
-    .clip(true)
-    .backgroundColor(COVER_PLACEHOLDER)
-    .margin({ left: PAGE_PAD, right: PAGE_PAD, top: SPACE_M })
+    const url: string = this.dailyVm.previewSongs[0].picUrl;
+    if (url.length === 0) {
+      return '';
+    }
+    return `${url}?param=300y300`;
   }
 
   @Builder
-  DailyHeroArea() {
-    if (this.dailyVm.loading) {
-      Column() {
-        LoadingProgress().width(40).height(40).color(TEXT_SECONDARY)
-      }
+  SearchBar() {
+    Search({ value: this.searchVm.keyword, placeholder: '搜索歌曲、歌单、专辑' })
+      .placeholderColor(TEXT_SECONDARY)
+      .fontColor(TEXT_PRIMARY)
+      .backgroundColor(CARD_BG)
+      .height(40)
       .width('100%')
-      .height(220)
-      .justifyContent(FlexAlign.Center)
-      .margin({ top: SPACE_M })
-    } else if (this.dailyVm.error.length > 0) {
-      Column() {
+      .cancelButton({ style: CancelButtonStyle.INPUT })
+      .onChange((value: string) => {
+        this.searchVm.onKeywordChange(value);
+      })
+      .onSubmit((value: string) => {
+        this.searchVm.doSearch(value);
+      })
+  }
+
+  @Builder
+  StatusCard() {
+    Column() {
+      if (this.dailyVm.loading) {
+        LoadingProgress().width(40).height(40).color(TEXT_SECONDARY)
+      } else {
         Text(this.dailyVm.error)
           .fontSize(14)
           .fontColor(TEXT_SECONDARY)
@@ -195,35 +121,158 @@ export struct DiscoverPage {
             this.dailyVm.load();
           })
       }
-      .width('100%')
-      .height(220)
-      .justifyContent(FlexAlign.Center)
-    } else {
+    }
+    .width('100%')
+    .height(220)
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor(CARD_BG)
+    .borderRadius(RADIUS_L)
+    .shadow({ radius: 12, color: '#33000000', offsetY: 2 })
+  }
+
+  @Builder
+  DailyHeroHeader() {
+    Stack() {
+      if (this.heroCover().length > 0) {
+        Image(this.heroCover())
+          .width('100%')
+          .height('100%')
+          .objectFit(ImageFit.Cover)
+          .blur(30)
+          .scale({ x: 1.2, y: 1.2 })
+      } else {
+        Column()
+          .width('100%')
+          .height('100%')
+          .linearGradient({
+            direction: GradientDirection.RightBottom,
+            colors: [[ACCENT_COLOR, 0.0], ['#B32626', 1.0]]
+          })
+      }
+
+      Column()
+        .width('100%')
+        .height('100%')
+        .linearGradient({
+          direction: GradientDirection.Bottom,
+          colors: [['#33000000', 0.0], ['#B3000000', 1.0]]
+        })
+
       Column() {
-        this.DailyHeroCard()
+        Column() {
+          Text(this.todayDay)
+            .fontSize(34)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(Color.White)
+          Text(this.weekday())
+            .fontSize(12)
+            .fontColor('#B3FFFFFF')
+            .margin({ top: 2 })
+
+          Blank()
+
+          Text('每日推荐')
+            .fontSize(20)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(Color.White)
+          Text(this.heroSubtitle())
+            .fontSize(12)
+            .fontColor('#B3FFFFFF')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .margin({ top: 4 })
+        }
+        .width('100%')
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+        .onClick(() => {
+          this.openDailySongs();
+        })
+
         if (this.dailyVm.songs.length > 0) {
-          Row() {
-            Text(`今日推荐 · ${this.dailyVm.songs.length} 首`)
-              .fontSize(13)
-              .fontColor(TEXT_SECONDARY)
-              .layoutWeight(1)
-            Text('查看全部')
-              .fontSize(13)
-              .fontColor(ACCENT_COLOR)
-            SymbolGlyph($r('sys.symbol.chevron_right'))
-              .fontSize(12)
-              .fontColor([ACCENT_COLOR])
-              .margin({ left: 2 })
+          Row({ space: SPACE_S }) {
+            Button({ type: ButtonType.Capsule }) {
+              Row() {
+                SymbolGlyph($r('sys.symbol.play_fill'))
+                  .fontSize(14)
+                  .fontColor([ON_ACCENT])
+                Text('播放全部')
+                  .fontSize(13)
+                  .fontColor(ON_ACCENT)
+                  .margin({ left: 4 })
+              }
+              .alignItems(VerticalAlign.Center)
+            }
+            .layoutWeight(1)
+            .height(36)
+            .padding({ left: SPACE_L, right: SPACE_L })
+            .backgroundColor(ACCENT_COLOR)
+            .onClick(() => {
+              this.dailyVm.playAll();
+            })
+
+            Button({ type: ButtonType.Capsule }) {
+              Row() {
+                Text(`查看全部 · ${this.dailyVm.songs.length} 首`)
+                  .fontSize(13)
+                  .fontColor(Color.White)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                SymbolGlyph($r('sys.symbol.chevron_right'))
+                  .fontSize(12)
+                  .fontColor([Color.White])
+                  .margin({ left: 2 })
+              }
+              .alignItems(VerticalAlign.Center)
+            }
+            .layoutWeight(1)
+            .height(36)
+            .padding({ left: SPACE_L, right: SPACE_L })
+            .backgroundColor('#33FFFFFF')
+            .backgroundBlurStyle(BlurStyle.Regular)
+            .onClick(() => {
+              this.openDailySongs();
+            })
           }
           .width('100%')
-          .padding({ left: 20, right: PAGE_PAD, top: SPACE_M })
-          .onClick(() => {
-            this.openDailySongs();
-          })
+          .margin({ top: SPACE_M })
         }
       }
       .width('100%')
+      .height('100%')
+      .padding(SPACE_L)
+      .alignItems(HorizontalAlign.Start)
     }
+    .width('100%')
+    .height(200)
+    .clip(true)
+  }
+
+  @Builder
+  DailyRecommendCard() {
+    Column() {
+      this.DailyHeroHeader()
+
+      if (this.dailyVm.previewSongs.length > 0) {
+        Column() {
+          ForEach(this.dailyVm.previewSongs, (song: SongInfo, songIndex: number) => {
+            SongRow({
+              song: song,
+              songIndex: songIndex,
+              onTap: (idx: number) => {
+                this.dailyVm.playAt(idx);
+              }
+            })
+          }, (song: SongInfo) => song.id.toString())
+        }
+        .width('100%')
+      }
+    }
+    .width('100%')
+    .backgroundColor(CARD_BG)
+    .borderRadius(RADIUS_L)
+    .clip(true)
+    .shadow({ radius: 12, color: '#33000000', offsetY: 2 })
   }
 
   @Builder
@@ -249,123 +298,56 @@ export struct DiscoverPage {
     .padding(SPACE_L)
     .backgroundColor(CARD_BG)
     .borderRadius(RADIUS_L)
-    .margin({ left: PAGE_PAD, right: PAGE_PAD, top: SPACE_M })
+    .shadow({ radius: 12, color: '#33000000', offsetY: 2 })
   }
 
   @Builder
-  BannerArea() {
-    if (this.vm.banners.length > 0) {
-      Swiper() {
-        ForEach(this.vm.banners, (b: BannerInfo) => {
-          Image(b.pic)
-            .width('100%')
-            .height('100%')
-            .objectFit(ImageFit.Cover)
-            .borderRadius(RADIUS_L)
-        }, (b: BannerInfo) => `${b.targetType}-${b.targetId}`)
+  HomeScroll() {
+    Scroll() {
+      Column() {
+        if (!this.isLoggedIn()) {
+          this.LoginGuideCard()
+        } else if (this.dailyVm.loading || this.dailyVm.error.length > 0) {
+          this.StatusCard()
+        } else {
+          this.DailyRecommendCard()
+        }
       }
-      .autoPlay(true)
-      .interval(4000)
-      .loop(true)
-      .indicator(
-        new DotIndicator()
-          .itemWidth(6)
-          .itemHeight(6)
-          .selectedItemWidth(16)
-          .selectedItemHeight(6)
-          .color('#66FFFFFF')
-          .selectedColor(Color.White)
-      )
-      .height(150)
-      .padding({ left: PAGE_PAD, right: PAGE_PAD, top: SPACE_M })
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+      .padding({ left: PAGE_PAD, right: PAGE_PAD, bottom: SPACE_M + this.chrome.listEndOffset })
     }
+    .width('100%')
+    .layoutWeight(1)
+    .scrollBar(BarState.Off)
+    .align(Alignment.Top)
+    .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
   }
 
   build() {
-    Column() {
-      Text('发现')
-        .fontSize(24)
-        .fontWeight(FontWeight.Bold)
-        .fontColor(TEXT_PRIMARY)
-        .width('100%')
-        .padding({ left: PAGE_PAD, top: SPACE_M, bottom: SPACE_S })
+    Column({ space: SPACE_M }) {
+      Column() {
+        this.SearchBar()
+      }
+      .width('100%')
+      .padding({ left: PAGE_PAD, right: PAGE_PAD })
 
-      if (this.vm.loading) {
+      if (this.searchVm.loading) {
         Column() {
           LoadingProgress().width(40).height(40).color(TEXT_SECONDARY)
         }
         .layoutWeight(1)
         .justifyContent(FlexAlign.Center)
         .width('100%')
-      } else if (this.vm.error.length > 0) {
-        Column() {
-          Text(this.vm.error).fontColor(TEXT_SECONDARY).fontSize(14)
-          Button('重试')
-            .type(ButtonType.Capsule)
-            .controlSize(ControlSize.SMALL)
-            .margin({ top: SPACE_M })
-            .onClick(() => {
-              this.vm.load();
-            })
-        }
-        .layoutWeight(1)
-        .justifyContent(FlexAlign.Center)
-        .width('100%')
+      } else if (this.searchVm.searched) {
+        SearchResultPanel({ vm: this.searchVm })
       } else {
-        Scroll() {
-          Column() {
-            this.BannerArea()
-
-            if (this.isLoggedIn()) {
-              this.DailyHeroArea()
-            } else {
-              this.LoginGuideCard()
-            }
-
-            Text('热门歌单')
-              .fontSize(18)
-              .fontWeight(FontWeight.Medium)
-              .fontColor(TEXT_PRIMARY)
-              .width('100%')
-              .padding({ left: PAGE_PAD, top: 18, bottom: SPACE_S })
-
-            Grid() {
-              ForEach(this.vm.playlists, (pl: SongListInfo) => {
-                GridItem() {
-                  Column() {
-                    Image(`${pl.coverImgUrl}?param=300y300`)
-                      .width('100%')
-                      .aspectRatio(1)
-                      .borderRadius(RADIUS_M)
-                      .backgroundColor(COVER_PLACEHOLDER)
-                    Text(pl.name)
-                      .fontSize(12)
-                      .fontColor(TEXT_PRIMARY)
-                      .maxLines(2)
-                      .textOverflow({ overflow: TextOverflow.Ellipsis })
-                      .margin({ top: 4 })
-                  }
-                  .alignItems(HorizontalAlign.Start)
-                  .onClick(() => {
-                    this.openPlaylist(pl.id);
-                  })
-                }
-              }, (pl: SongListInfo) => pl.id.toString())
-            }
-            .columnsTemplate('1fr 1fr 1fr')
-            .columnsGap(10)
-            .rowsGap(10)
-            .padding({ left: PAGE_PAD, right: PAGE_PAD, bottom: 140 })
-          }
-          .alignItems(HorizontalAlign.Start)
-          .width('100%')
-        }
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
+        this.HomeScroll()
       }
     }
     .width('100%')
     .height('100%')
+    .padding({ top: SPACE_M })
     .backgroundColor(PAGE_BG)
   }
 }

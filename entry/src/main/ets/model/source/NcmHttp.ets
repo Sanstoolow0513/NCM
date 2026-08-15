@@ -51,17 +51,20 @@ export class NcmHttp {
    * @param path 原始路径（/weapi/... 或 /api/...）
    * @param params 业务参数（全部字符串，csrf_token 由本函数注入）
    * @param useEapi true 走 eapi（interface.music.163.com + AES-ECB），false 走 weapi
+   * @param shouldContinue 发送请求及写入响应 Cookie 前的可选有效性校验
    */
   async request(
     path: string,
     params: Record<string, string>,
     useEapi: boolean,
-    appendCsrf: boolean
+    appendCsrf: boolean,
+    shouldContinue: (() => boolean) | null = null
   ): Promise<string> {
     if (this.csrf.length === 0) {
       this.csrf = this.jar.get('__csrf');
     }
-    let url = appendCsrf ? `${BASE_URL}${path}?csrf_token=${this.csrf}` : `${BASE_URL}${path}`;
+    const csrfSeparator: string = path.indexOf('?') >= 0 ? '&' : '?';
+    let url = appendCsrf ? `${BASE_URL}${path}${csrfSeparator}csrf_token=${this.csrf}` : `${BASE_URL}${path}`;
     params['csrf_token'] = this.csrf;
     let body: string;
     if (useEapi) {
@@ -90,6 +93,9 @@ export class NcmHttp {
     } else {
       body = await weapi(JSON.stringify(params));
     }
+    if (shouldContinue !== null && !shouldContinue()) {
+      throw new Error('请求已失效');
+    }
 
     const httpRequest = http.createHttp();
     try {
@@ -106,6 +112,9 @@ export class NcmHttp {
         connectTimeout: 15000,
         readTimeout: 15000
       });
+      if (shouldContinue !== null && !shouldContinue()) {
+        throw new Error('请求已失效');
+      }
       const respHeader = response.header as Record<string, Object>;
       const sc: Object | undefined = respHeader['set-cookie'];
       const setCookies: string[] = [];

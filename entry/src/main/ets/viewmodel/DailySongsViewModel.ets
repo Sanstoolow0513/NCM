@@ -2,10 +2,13 @@ import { CatalogRepository } from '../model/repository/CatalogRepository';
 import { SongInfo } from '../model/entity/models';
 import { PlayerService } from '../service/player/PlayerService';
 
+/** 发现页日推预览条数 */
+const PREVIEW_LIMIT: number = 6;
+
 @ObservedV2
 export class DailySongsViewModel {
   @Trace songs: SongInfo[] = [];
-  @Trace heroSongs: SongInfo[] = [];
+  @Trace previewSongs: SongInfo[] = [];
   @Trace loading: boolean = true;
   @Trace error: string = '';
   @Trace toastMessage: string = '';
@@ -15,22 +18,22 @@ export class DailySongsViewModel {
     this.error = '';
     try {
       this.songs = await CatalogRepository.get().dailyRecommendSongs();
-      this.heroSongs = this.takeHeroSongs(this.songs);
+      this.previewSongs = this.takeFirst(this.songs, PREVIEW_LIMIT);
     } catch (e) {
       console.error(`[DailySongsViewModel] load failed: ${JSON.stringify(e)}`);
       this.error = '加载失败，请稍后重试';
-      this.heroSongs = [];
+      this.previewSongs = [];
     }
     this.loading = false;
   }
 
-  private takeHeroSongs(songs: SongInfo[]): SongInfo[] {
-    const covers: SongInfo[] = [];
-    const limit: number = Math.min(10, songs.length);
-    for (let i = 0; i < limit; i++) {
-      covers.push(songs[i]);
+  private takeFirst(songs: SongInfo[], limit: number): SongInfo[] {
+    const out: SongInfo[] = [];
+    const n: number = Math.min(limit, songs.length);
+    for (let i = 0; i < n; i++) {
+      out.push(songs[i]);
     }
-    return covers;
+    return out;
   }
 
   playAll(): void {

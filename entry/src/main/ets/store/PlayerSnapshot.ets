@@ -11,6 +11,7 @@ export class PlayerSnapshot {
   @Trace queue: SongInfo[] = [];
   @Trace queueIndex: number = -1;
   @Trace fullPlayerOpen: boolean = false;
+  @Trace fullPlayerQueueOpen: boolean = false;
   @Trace toastMessage: string = '';
   @Trace toastSeq: number = 0;
 
