@@ -47,11 +47,11 @@ export const MINIPLAYER_BG = $r('app.color.miniplayer_bg');
 export const BLUR_SCRIM = $r('app.color.blur_scrim');
 /** 底部手势条（小白条）占位，getWindowAvoidArea 尚未返回时的回退值 */
 export const NAV_INDICATOR_PAD: number = 20;
-/** 文本 TabBar 内容高度回退（不含小白条；小白条由 ChromeInsets.safeBottom 叠加） */
+/** 文本 TabBar 内容高度回退（不含小白条；小白条由布局安全区处理） */
 export const TAB_BAR_HEIGHT: number = 56;
 /** 迷你播放条高度 */
 export const MINIPLAYER_HEIGHT: number = 56;
-/** 迷你播放条与 Tab 栏 / 底部安全区之间的间隙 */
+/** 迷你播放条与 Tab 栏 / 布局安全区底边之间的间隙 */
 export const MINIPLAYER_GAP: number = 8;
 /** 迷你条封面与播放页封面的 geometryTransition id */
 export const PLAYER_COVER_GEOMETRY_ID: string = 'playerCover';

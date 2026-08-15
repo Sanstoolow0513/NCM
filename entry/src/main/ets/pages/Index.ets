@@ -202,8 +202,7 @@ struct Index {
         .width('100%')
         .height('100%')
         .hitTestBehavior(HitTestMode.Transparent)
-        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
-        .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
+        .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP])
         .transition(TransitionEffect.OPACITY.animation({
           duration: PLAYER_EXPAND_DURATION,
           curve: Curve.Friction

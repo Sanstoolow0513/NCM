@@ -1,7 +1,7 @@
 /**
  * 底部沉浸层占位
- * 窗口全屏后系统不再自动抬起底栏；可点区域用 TYPE_NAVIGATION_INDICATOR 高度做 padding。
- * 首页文本 TabBar 由 Tabs 布局占用，列表只需再避让迷你条。
+ * 迷你条铺满层只 ignore 顶部，底边走布局安全区躲避小白条；有文本 Tab 时再抬起栏高。
+ * 列表滚到底：首页 Tab 已占布局，只需再避让迷你条；子页 ignore 了底部安全区，再叠加小白条。
  */
 import {
   MINIPLAYER_GAP, MINIPLAYER_HEIGHT, NAV_INDICATOR_PAD, TAB_BAR_HEIGHT
@@ -17,8 +17,8 @@ export class ChromeInsets {
   @Trace miniPlayerVisible: boolean = false;
   @Trace miniPlayerHeight: number = MINIPLAYER_HEIGHT;
   @Trace gap: number = MINIPLAYER_GAP;
-  /** 迷你播放条下方需要抬起的高度 */
-  @Trace liftBelowPlayer: number = TAB_BAR_HEIGHT + NAV_INDICATOR_PAD + MINIPLAYER_GAP;
+  /** 迷你条相对布局安全区底边再抬起的高度（不含小白条） */
+  @Trace liftBelowPlayer: number = TAB_BAR_HEIGHT + MINIPLAYER_GAP;
   /** 列表/滚动区滚到底时避让底部悬浮层的偏移 */
   @Trace listEndOffset: number = 0;
 
@@ -66,9 +66,7 @@ export class ChromeInsets {
   sync(): void {
     let lift: number = this.gap;
     if (this.tabBarVisible) {
-      lift = lift + this.tabBarHeight + this.safeBottom;
-    } else {
-      lift = lift + this.safeBottom;
+      lift = lift + this.tabBarHeight;
     }
     this.liftBelowPlayer = lift;
     let listEnd: number = 0;
