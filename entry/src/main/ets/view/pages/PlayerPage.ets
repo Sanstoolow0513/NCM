@@ -1,6 +1,7 @@
 /**
  * 完整播放页
  * 封面模糊沉浸背景（固定深色蒙版 + 白色文字层级），歌词滚动 + 播放控制
+ * 用户滑动歌词时封面缩小以露出更多歌词，点击封面恢复原比例
  */
 import { LyricLine } from '../../model/entity/models';
 import { PlayerViewModel } from '../../viewmodel/PlayerViewModel';
@@ -21,12 +22,19 @@ const LOOP_MODE_SYMBOLS: Resource[] = [
   $r('sys.symbol.shuffle')
 ];
 
+/** 播放页封面展开/收起宽度与上边距 */
+const COVER_EXPANDED: string = '72%';
+const COVER_COLLAPSED: string = '28%';
+const COVER_MARGIN_EXPANDED: number = 14;
+const COVER_MARGIN_COLLAPSED: number = 8;
+
 @ComponentV2
 export struct PlayerPage {
   @Param navPathStack: NavPathStack = new NavPathStack();
   @Local vm: PlayerViewModel = new PlayerViewModel();
   @Local player: PlayerSnapshot = StoreHub.player();
   @Local showQueue: boolean = false;
+  @Local coverCollapsed: boolean = false;
   private scroller: Scroller = new Scroller();
 
   aboutToAppear(): void {
@@ -40,6 +48,7 @@ export struct PlayerPage {
 
   @Monitor('player.currentSong')
   onSongChanged(_mon: IMonitor): void {
+    this.coverCollapsed = false;
     this.vm.loadLyric(this.player.currentSong);
     if (this.player.currentSong === null) {
       this.showQueue = false;
@@ -72,6 +81,15 @@ export struct PlayerPage {
       return LOOP_MODE_SYMBOLS[this.player.loopMode];
     }
     return LOOP_MODE_SYMBOLS[0];
+  }
+
+  private setCoverCollapsed(collapsed: boolean): void {
+    if (this.coverCollapsed === collapsed) {
+      return;
+    }
+    this.getUIContext().animateTo({ duration: 280, curve: Curve.EaseOut }, () => {
+      this.coverCollapsed = collapsed;
+    });
   }
 
   build() {
@@ -108,12 +126,15 @@ export struct PlayerPage {
           .padding({ left: 16, right: 16, top: 12 })
 
           Image(this.coverSrc())
-            .width('72%')
+            .width(this.coverCollapsed ? COVER_COLLAPSED : COVER_EXPANDED)
             .aspectRatio(1)
             .borderRadius(RADIUS_L)
             .backgroundColor('#33FFFFFF')
             .shadow({ radius: 24, color: '#66000000', offsetY: 8 })
-            .margin({ top: 14 })
+            .margin({ top: this.coverCollapsed ? COVER_MARGIN_COLLAPSED : COVER_MARGIN_EXPANDED })
+            .onClick(() => {
+              this.setCoverCollapsed(false);
+            })
 
           Text(this.player.currentSong?.name ?? '')
             .fontSize(20)
@@ -161,6 +182,11 @@ export struct PlayerPage {
             .width('100%')
             .scrollBar(BarState.Off)
             .margin({ top: 8 })
+            .onDidScroll((_offset: number, scrollState: ScrollState) => {
+              if (!this.coverCollapsed && scrollState === ScrollState.Scroll) {
+                this.setCoverCollapsed(true);
+              }
+            })
           } else {
             Column() {
               Text('纯音乐 / 暂无歌词')
