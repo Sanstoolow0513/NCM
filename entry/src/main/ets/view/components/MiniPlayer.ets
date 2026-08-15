@@ -82,6 +82,7 @@ export struct MiniPlayer {
         .alignItems(VerticalAlign.Center)
         .onClick(() => {
           this.getUIContext().animateTo({ duration: PLAYER_EXPAND_DURATION, curve: Curve.Friction }, () => {
+            this.player.fullPlayerQueueOpen = false;
             this.player.fullPlayerOpen = true;
           });
         })

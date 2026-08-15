@@ -3,19 +3,18 @@
  * 切歌 / 移除单曲 / 清空队列
  */
 import { SongInfo } from '../../model/entity/models';
-import { PlayerService } from '../../service/player/PlayerService';
-import { StoreHub } from '../../store/StoreHub';
-import { PlayerSnapshot } from '../../store/PlayerSnapshot';
+import { QueuePanelViewModel } from '../../viewmodel/QueuePanelViewModel';
 import {
   ACCENT_COLOR, COVER_PLACEHOLDER, PAGE_PAD, RADIUS_S, SPACE_M, SPACE_S, TEXT_PRIMARY, TEXT_SECONDARY
 } from '../../common/utils/format';
 
 @ComponentV2
 export struct QueuePanel {
-  @Local player: PlayerSnapshot = StoreHub.player();
+  @Param bottomInset: number = 0;
+  @Local vm: QueuePanelViewModel = new QueuePanelViewModel();
 
   private isCurrent(songIndex: number): boolean {
-    return this.player.queueIndex === songIndex;
+    return this.vm.isCurrent(songIndex);
   }
 
   private coverSrc(song: SongInfo): string {
@@ -26,7 +25,7 @@ export struct QueuePanel {
   }
 
   private confirmClear(): void {
-    if (this.player.queue.length === 0) {
+    if (this.vm.queueSize() === 0) {
       return;
     }
     this.getUIContext().showAlertDialog({
@@ -38,7 +37,7 @@ export struct QueuePanel {
         {
           value: '清空',
           action: () => {
-            PlayerService.get().clearQueue();
+            this.vm.clearQueue();
           }
         }
       ]
@@ -48,13 +47,13 @@ export struct QueuePanel {
   build() {
     Column() {
       Row() {
-        Text(`${this.player.queue.length} 首`)
+        Text(`${this.vm.queueSize()} 首`)
           .fontSize(13)
           .fontColor(TEXT_SECONDARY)
           .layoutWeight(1)
         Text('清空')
           .fontSize(14)
-          .fontColor(this.player.queue.length > 0 ? ACCENT_COLOR : TEXT_SECONDARY)
+          .fontColor(this.vm.queueSize() > 0 ? ACCENT_COLOR : TEXT_SECONDARY)
           .onClick(() => {
             this.confirmClear();
           })
@@ -62,7 +61,7 @@ export struct QueuePanel {
       .width('100%')
       .padding({ left: PAGE_PAD, right: PAGE_PAD, top: SPACE_S, bottom: SPACE_M })
 
-      if (this.player.queue.length === 0) {
+      if (this.vm.queueSize() === 0) {
         Text('播放列表为空')
           .fontSize(14)
           .fontColor(TEXT_SECONDARY)
@@ -72,7 +71,7 @@ export struct QueuePanel {
           .layoutWeight(1)
       } else {
         List() {
-          ForEach(this.player.queue, (song: SongInfo, songIndex: number) => {
+          ForEach(this.vm.songs(), (song: SongInfo, songIndex: number) => {
             ListItem() {
               Row() {
                 Row() {
@@ -102,14 +101,14 @@ export struct QueuePanel {
                 .layoutWeight(1)
                 .alignItems(VerticalAlign.Center)
                 .onClick(() => {
-                  PlayerService.get().playAt(songIndex);
+                  this.vm.playAt(songIndex);
                 })
 
                 SymbolGlyph($r('sys.symbol.minus_circle'))
                   .fontSize(22)
                   .fontColor([TEXT_SECONDARY])
                   .onClick(() => {
-                    PlayerService.get().removeAt(songIndex);
+                    this.vm.removeAt(songIndex);
                   })
               }
               .width('100%')
@@ -124,5 +123,6 @@ export struct QueuePanel {
     }
     .width('100%')
     .height('100%')
+    .padding({ bottom: this.bottomInset })
   }
 }

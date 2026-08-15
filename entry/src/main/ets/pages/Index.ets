@@ -65,8 +65,11 @@ struct Index {
 
   @Monitor('player.currentSong', 'player.fullPlayerOpen', 'theme.mode')
   onPlayerChrome(_mon: IMonitor): void {
-    if (this.player.currentSong === null && this.player.fullPlayerOpen) {
+    if (this.player.currentSong === null) {
       this.player.fullPlayerOpen = false;
+      this.player.fullPlayerQueueOpen = false;
+    } else if (!this.player.fullPlayerOpen && this.player.fullPlayerQueueOpen) {
+      this.player.fullPlayerQueueOpen = false;
     }
     this.syncChrome();
     this.applySystemBars();
@@ -79,14 +82,20 @@ struct Index {
 
   private closeFullPlayer(): void {
     if (!this.player.fullPlayerOpen) {
+      this.player.fullPlayerQueueOpen = false;
       return;
     }
+    this.player.fullPlayerQueueOpen = false;
     this.getUIContext().animateTo({ duration: PLAYER_EXPAND_DURATION, curve: Curve.Friction }, () => {
       this.player.fullPlayerOpen = false;
     });
   }
 
   onBackPress(): boolean {
+    if (this.player.fullPlayerQueueOpen) {
+      this.player.fullPlayerQueueOpen = false;
+      return true;
+    }
     if (this.player.fullPlayerOpen) {
       this.closeFullPlayer();
       return true;

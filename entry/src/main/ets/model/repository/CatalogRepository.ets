@@ -124,9 +124,9 @@ export class CatalogRepository {
   }
 
   /** 当前账号喜欢的歌曲 id（无序） */
-  async likedIds(uid: number): Promise<number[]> {
+  async likedIds(uid: number, shouldContinue: (() => boolean) | null = null): Promise<number[]> {
     const p: Record<string, string> = { 'uid': uid.toString() };
-    const res = await NcmHttp.get().request('/weapi/song/like/get', p, false, true);
+    const res = await NcmHttp.get().request('/weapi/song/like/get', p, false, true, shouldContinue);
     const obj = JSON.parse(res) as Object;
     if (jNum(obj, ['code']) !== 200) {
       throw new Error(`获取喜欢列表失败 code=${jNum(obj, ['code'])}`);
@@ -135,12 +135,17 @@ export class CatalogRepository {
   }
 
   /** 红心 / 取消红心，写入「我喜欢的音乐」 */
-  async setSongLike(trackId: number, like: boolean): Promise<void> {
+  async setSongLike(trackId: number, like: boolean, shouldContinue: (() => boolean) | null = null): Promise<void> {
+    const trackIdValue: string = trackId.toString();
+    const likeValue: string = like ? 'true' : 'false';
     const p: Record<string, string> = {
-      'trackId': trackId.toString(),
-      'like': like ? 'true' : 'false'
+      'alg': 'itembased',
+      'trackId': trackIdValue,
+      'like': likeValue,
+      'time': '25'
     };
-    const res = await NcmHttp.get().request('/weapi/radio/like', p, false, true);
+    const path: string = `/weapi/radio/like?alg=itembased&trackId=${trackIdValue}&like=${likeValue}&time=25`;
+    const res = await NcmHttp.get().request(path, p, false, true, shouldContinue);
     const obj = JSON.parse(res) as Object;
     if (jNum(obj, ['code']) !== 200) {
       throw new Error(`红心操作失败 code=${jNum(obj, ['code'])}`);

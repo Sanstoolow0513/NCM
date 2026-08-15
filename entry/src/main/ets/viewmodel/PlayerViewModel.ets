@@ -7,23 +7,31 @@ import { PlayerService } from '../service/player/PlayerService';
 export class PlayerViewModel {
   @Trace lyrics: LyricLine[] = [];
   @Trace activeLine: number = -1;
+  private lyricRequestGeneration: number = 0;
 
   async loadLyric(song: SongInfo | null): Promise<void> {
+    const requestGeneration: number = this.lyricRequestGeneration + 1;
+    this.lyricRequestGeneration = requestGeneration;
+    this.lyrics = [];
+    this.activeLine = -1;
     if (song === null) {
-      this.lyrics = [];
-      this.activeLine = -1;
       return;
     }
     const songId = song.id;
     try {
       const lines = await MediaRepository.get().lyric(songId);
+      if (requestGeneration !== this.lyricRequestGeneration) {
+        return;
+      }
       const cur = StoreHub.player().currentSong;
       if (cur !== null && cur.id === songId) {
         this.lyrics = lines;
         this.updateActiveLine(StoreHub.player().positionMs);
       }
     } catch (e) {
-      console.error(`[PlayerViewModel] load lyric failed: ${JSON.stringify(e)}`);
+      if (requestGeneration === this.lyricRequestGeneration) {
+        console.error(`[PlayerViewModel] load lyric failed: ${JSON.stringify(e)}`);
+      }
     }
   }
 

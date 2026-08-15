@@ -3,11 +3,7 @@
  * 封面 + 歌名/歌手·专辑·时长，右侧下一首与红心；正在播放的歌曲歌名高亮为主色
  */
 import { SongInfo } from '../../model/entity/models';
-import { PlayerService } from '../../service/player/PlayerService';
-import { LikeService } from '../../service/like/LikeService';
-import { StoreHub } from '../../store/StoreHub';
-import { PlayerSnapshot } from '../../store/PlayerSnapshot';
-import { LikeSnapshot } from '../../store/LikeSnapshot';
+import { SongRowViewModel } from '../../viewmodel/SongRowViewModel';
 import {
   ACCENT_COLOR, COVER_PLACEHOLDER, formatDuration, PAGE_PAD, RADIUS_S, TEXT_PRIMARY, TEXT_SECONDARY
 } from '../../common/utils/format';
@@ -18,15 +14,14 @@ export struct SongRow {
   @Param songIndex: number = 0;
   @Event onTap: (songIndex: number) => void = (_songIndex: number) => {
   };
-  @Local player: PlayerSnapshot = StoreHub.player();
-  @Local likes: LikeSnapshot = StoreHub.likes();
+  @Local vm: SongRowViewModel = new SongRowViewModel();
 
   private isPlayingThis(): boolean {
-    return this.player.currentSong !== null && this.player.currentSong.id === this.song.id && this.song.id !== 0;
+    return this.vm.isPlaying(this.song.id);
   }
 
   private isLiked(): boolean {
-    return this.likes.revision >= 0 && this.likes.has(this.song.id);
+    return this.vm.isLiked(this.song.id);
   }
 
   private coverSrc(): string {
@@ -79,7 +74,7 @@ export struct SongRow {
         .width(36)
         .height(36)
         .onClick(() => {
-          PlayerService.get().insertNext(this.song);
+          this.vm.insertNext(this.song);
         })
 
       SymbolGlyph(this.isLiked() ? $r('sys.symbol.heart_fill') : $r('sys.symbol.heart'))
@@ -88,7 +83,7 @@ export struct SongRow {
         .width(36)
         .height(36)
         .onClick(() => {
-          LikeService.get().toggle(this.song.id);
+          this.vm.toggleLike(this.song.id);
         })
     }
     .width('100%')

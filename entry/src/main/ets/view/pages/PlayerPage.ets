@@ -43,7 +43,6 @@ export struct PlayerPage {
   @Consumer('chromeInsets') chrome: ChromeInsets = new ChromeInsets();
   @Local vm: PlayerViewModel = new PlayerViewModel();
   @Local player: PlayerSnapshot = StoreHub.player();
-  @Local showQueue: boolean = false;
   @Local coverCollapsed: boolean = false;
   private scroller: Scroller = new Scroller();
 
@@ -56,7 +55,7 @@ export struct PlayerPage {
     this.coverCollapsed = false;
     this.vm.loadLyric(this.player.currentSong);
     if (this.player.currentSong === null) {
-      this.showQueue = false;
+      this.player.fullPlayerQueueOpen = false;
     }
   }
 
@@ -127,6 +126,7 @@ export struct PlayerPage {
             .fontColor([Color.White])
             .onClick(() => {
               this.getUIContext().animateTo({ duration: PLAYER_EXPAND_DURATION, curve: Curve.Friction }, () => {
+                this.player.fullPlayerQueueOpen = false;
                 this.player.fullPlayerOpen = false;
               });
             })
@@ -286,7 +286,7 @@ export struct PlayerPage {
             .fontColor([Color.White])
             .width(56)
             .onClick(() => {
-              this.showQueue = true;
+              this.player.fullPlayerQueueOpen = true;
             })
         }
         .width('100%')
@@ -298,13 +298,13 @@ export struct PlayerPage {
       .width('100%')
       .height('100%')
 
-      if (this.showQueue) {
+      if (this.player.fullPlayerQueueOpen) {
         Column() {
           Column()
             .width('100%')
             .layoutWeight(1)
             .onClick(() => {
-              this.showQueue = false;
+              this.player.fullPlayerQueueOpen = false;
             })
           Column() {
             Row() {
@@ -316,12 +316,12 @@ export struct PlayerPage {
                 .fontSize(14)
                 .fontColor(TEXT_PRIMARY)
                 .onClick(() => {
-                  this.showQueue = false;
+                  this.player.fullPlayerQueueOpen = false;
                 })
             }
             .width('100%')
             .padding({ left: 16, right: 16, top: 16, bottom: 8 })
-            QueuePanel()
+            QueuePanel({ bottomInset: this.chrome.safeBottom })
               .layoutWeight(1)
           }
           .width('100%')
@@ -340,10 +340,5 @@ export struct PlayerPage {
     .backgroundColor(Color.Black)
     .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
     .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
-    .onAppear(() => {
-      if (this.vm.lyrics.length === 0) {
-        this.vm.loadLyric(this.player.currentSong);
-      }
-    })
   }
 }

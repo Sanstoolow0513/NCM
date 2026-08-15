@@ -26,11 +26,11 @@ HarmonyOS 第三方网易云音乐客户端，用 ArkTS + ArkUI（Stage 模型�
 
 用 [DevEco Studio](https://developer.huawei.com/consumer/cn/deveco-studio/) 打开本仓库，配置自动签名后连接真机或模拟器（API 24+）运行。
 
-命令行（需本机已配置 DevEco 的 ohpm / hvigor）：
+命令行请在已安装 DevEco CLI 且可使用 DevEco `ohpm` 的环境中执行。本仓库不包含 `hvigorw` 包装脚本：
 
 ```bash
 ohpm install
-hvigorw assembleHap --mode module -p product=default
+devecocli build
 ```
 
 ## 说明
