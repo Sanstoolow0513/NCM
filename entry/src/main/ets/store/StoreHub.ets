@@ -10,6 +10,7 @@ const KEY_THEME: string = 'ThemeSettings';
 
 export class StoreHub {
   private static appContext: common.ApplicationContext | null = null;
+  private static fontReady: boolean = false;
 
   static player(): PlayerSnapshot {
     return AppStorageV2.connect<PlayerSnapshot>(PlayerSnapshot, KEY_PLAYER, () => new PlayerSnapshot())!;
@@ -28,9 +29,25 @@ export class StoreHub {
     StoreHub.applyThemeMode(StoreHub.theme().mode);
   }
 
+  /** 窗口创建完成后调用，此时才能 setFont / setFontSizeScale */
+  static markFontReady(): void {
+    StoreHub.fontReady = true;
+    StoreHub.applyFont();
+  }
+
   static setThemeMode(mode: string): void {
     StoreHub.theme().mode = mode;
     StoreHub.applyThemeMode(mode);
+  }
+
+  static setFontScale(scale: number): void {
+    StoreHub.theme().fontScale = scale;
+    StoreHub.applyFont();
+  }
+
+  static setFontFamily(family: string): void {
+    StoreHub.theme().fontFamily = family;
+    StoreHub.applyFont();
   }
 
   static applyThemeMode(mode: string): void {
@@ -47,6 +64,23 @@ export class StoreHub {
       StoreHub.appContext.setColorMode(colorMode);
     } catch (err) {
       console.error(`[StoreHub] setColorMode failed: ${JSON.stringify(err)}`);
+    }
+  }
+
+  static applyFont(): void {
+    if (StoreHub.appContext === null || !StoreHub.fontReady) {
+      return;
+    }
+    const theme: ThemeSettings = StoreHub.theme();
+    try {
+      StoreHub.appContext.setFontSizeScale(theme.fontScale);
+    } catch (err) {
+      console.error(`[StoreHub] setFontSizeScale failed: ${JSON.stringify(err)}`);
+    }
+    try {
+      StoreHub.appContext.setFont(theme.fontFamily);
+    } catch (err) {
+      console.error(`[StoreHub] setFont failed: ${JSON.stringify(err)}`);
     }
   }
 }

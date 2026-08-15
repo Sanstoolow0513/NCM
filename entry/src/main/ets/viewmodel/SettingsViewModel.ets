@@ -9,6 +9,14 @@ export class SettingsViewModel {
     StoreHub.setThemeMode(mode);
   }
 
+  setFontScale(scale: number): void {
+    StoreHub.setFontScale(scale);
+  }
+
+  setFontFamily(family: string): void {
+    StoreHub.setFontFamily(family);
+  }
+
   async doLogout(): Promise<boolean> {
     await AuthRepository.get().logout();
     StoreHub.session().loginInfo = null;

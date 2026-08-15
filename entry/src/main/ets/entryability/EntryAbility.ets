@@ -45,6 +45,7 @@ export default class EntryAbility extends UIAbility {
         return;
       }
       hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
+      StoreHub.markFontReady();
       windowStage.getMainWindow().then((mainWindow: window.Window) => {
         mainWindow.setWindowSystemBarProperties({
           navigationBarColor: '#00000000'
