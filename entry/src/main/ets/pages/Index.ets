@@ -125,7 +125,7 @@ struct Index {
         .vertical(false)
         .barOverlap(true)
         .barFloatingStyle({
-          barBottomMargin: this.chrome.safeBottom,
+          barBottomMargin: this.chrome.tabBarBottomMargin,
           systemMaterialEffect: {
             materialType: hdsMaterial.MaterialType.IMMERSIVE,
             materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
@@ -154,6 +154,8 @@ struct Index {
         .width('100%')
         .alignItems(HorizontalAlign.Center)
         .padding({ bottom: this.chrome.liftBelowPlayer })
+        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
+        .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
         .hitTestBehavior(HitTestMode.Transparent)
         .transition(TransitionEffect.OPACITY
           .combine(TransitionEffect.translate({ y: 24 }))
