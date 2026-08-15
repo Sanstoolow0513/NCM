@@ -45,12 +45,10 @@ export const ACCENT_SOFT = $r('app.color.accent_soft');
 export const MINIPLAYER_BG = $r('app.color.miniplayer_bg');
 /** 封面模糊背景上的页面色蒙版（详情页头部） */
 export const BLUR_SCRIM = $r('app.color.blur_scrim');
-/** 底部手势条（小白条）占位，沉浸后把可点内容抬到条上方 */
+/** 底部手势条（小白条）占位，getWindowAvoidArea 尚未返回时的回退值 */
 export const NAV_INDICATOR_PAD: number = 20;
-/** 底部悬浮 Tab 栏默认高度（Hds 悬浮样式 BottomTabBarStyle） */
+/** 文本 TabBar 内容高度回退（不含小白条；小白条由 ChromeInsets.safeBottom 叠加） */
 export const TAB_BAR_HEIGHT: number = 56;
-/** 悬浮 Tab 与 HdsTabs 底边的视觉间距（barBottomMargin 的缝，全屏后还要再加手势条高度） */
-export const TAB_BAR_BOTTOM_GAP: number = 8;
 /** 迷你播放条高度 */
 export const MINIPLAYER_HEIGHT: number = 56;
 /** 迷你播放条与 Tab 栏 / 底部安全区之间的间隙 */

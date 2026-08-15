@@ -1,5 +1,4 @@
-import { HdsTabs, HdsTabsController, hdsMaterial } from '@kit.UIDesignKit';
-import { SymbolGlyphModifier, curves, window } from '@kit.ArkUI';
+import { curves, window } from '@kit.ArkUI';
 import { common } from '@kit.AbilityKit';
 import { MiniPlayer } from '../view/components/MiniPlayer';
 import { DailySongsPage } from '../view/pages/DailySongsPage';
@@ -14,7 +13,7 @@ import { SessionSnapshot } from '../store/SessionSnapshot';
 import { LikeService } from '../service/like/LikeService';
 import { RouteName } from '../common/router/RouteName';
 import { PlaylistRouteParam } from '../common/router/RouteParams';
-import { PAGE_BG, PLAYER_EXPAND_DURATION } from '../common/utils/format';
+import { ACCENT_COLOR, PAGE_BG, PLAYER_EXPAND_DURATION, TEXT_SECONDARY } from '../common/utils/format';
 import { ChromeInsets } from '../common/utils/ChromeInsets';
 import { ThemeSettings } from '../store/ThemeSettings';
 
@@ -27,9 +26,7 @@ struct Index {
   @Local session: SessionSnapshot = StoreHub.session();
   @Local theme: ThemeSettings = StoreHub.theme();
   @Local currentTab: number = 0;
-  private tabsController: HdsTabsController = new HdsTabsController();
-  private discoverTabIcon: SymbolGlyphModifier = new SymbolGlyphModifier($r('sys.symbol.square_grid_2x2'));
-  private mineTabIcon: SymbolGlyphModifier = new SymbolGlyphModifier($r('sys.symbol.person'));
+  private tabsController: TabsController = new TabsController();
   private hostWindow: window.Window | undefined = undefined;
   private onNavBar: boolean = true;
 
@@ -74,6 +71,12 @@ struct Index {
   private syncChrome(): void {
     this.chrome.setTabBarVisible(this.onNavBar && !this.player.fullPlayerOpen);
     this.chrome.setMiniPlayerVisible(this.player.currentSong !== null && !this.player.fullPlayerOpen);
+  }
+
+  private textTabBar(label: string): SubTabBarStyle {
+    return SubTabBarStyle.of(label)
+      .labelStyle({ selectedColor: ACCENT_COLOR, unselectedColor: TEXT_SECONDARY })
+      .indicator({ color: ACCENT_COLOR });
   }
 
   private closeFullPlayer(): void {
@@ -157,27 +160,20 @@ struct Index {
   build() {
     Stack({ alignContent: Alignment.TopStart }) {
       Navigation(this.navStack) {
-        HdsTabs({ controller: this.tabsController, index: this.currentTab }) {
+        Tabs({ barPosition: BarPosition.End, controller: this.tabsController, index: this.currentTab }) {
           TabContent() {
             DiscoverPage()
           }
-          .tabBar(new BottomTabBarStyle({ normal: this.discoverTabIcon }, '发现'))
+          .tabBar(this.textTabBar('发现'))
 
           TabContent() {
             MinePage()
           }
-          .tabBar(new BottomTabBarStyle({ normal: this.mineTabIcon }, '我的'))
+          .tabBar(this.textTabBar('我的'))
         }
-        .barPosition(BarPosition.End)
-        .vertical(false)
-        .barOverlap(true)
-        .barFloatingStyle({
-          barBottomMargin: this.chrome.tabBarBottomMargin,
-          systemMaterialEffect: {
-            materialType: hdsMaterial.MaterialType.IMMERSIVE,
-            materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
-          }
-        })
+        .barHeight('auto', true)
+        .barBackgroundColor(PAGE_BG)
+        .clip(false)
         .onChange((i: number) => {
           this.currentTab = i;
         })
