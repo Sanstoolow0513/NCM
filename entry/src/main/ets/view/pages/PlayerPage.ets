@@ -6,6 +6,7 @@ import { LyricLine } from '../../model/entity/models';
 import { PlayerViewModel } from '../../viewmodel/PlayerViewModel';
 import { StoreHub } from '../../store/StoreHub';
 import { PlayerSnapshot } from '../../store/PlayerSnapshot';
+import { QueuePanel } from '../components/QueuePanel';
 import { formatDuration, NAV_INDICATOR_PAD, PAGE_BG, RADIUS_L } from '../../common/utils/format';
 
 /** 深色蒙版上的白色文字层级 */
@@ -25,6 +26,7 @@ export struct PlayerPage {
   @Param navPathStack: NavPathStack = new NavPathStack();
   @Local vm: PlayerViewModel = new PlayerViewModel();
   @Local player: PlayerSnapshot = StoreHub.player();
+  @Local showQueue: boolean = false;
   private scroller: Scroller = new Scroller();
 
   aboutToAppear(): void {
@@ -39,6 +41,9 @@ export struct PlayerPage {
   @Monitor('player.currentSong')
   onSongChanged(_mon: IMonitor): void {
     this.vm.loadLyric(this.player.currentSong);
+    if (this.player.currentSong === null) {
+      this.showQueue = false;
+    }
   }
 
   @Monitor('player.positionMs')
@@ -48,6 +53,11 @@ export struct PlayerPage {
     if (idx !== prev && idx > 0) {
       this.scroller.scrollToIndex(idx - 1, true);
     }
+  }
+
+  @LocalBuilder
+  QueueSheet() {
+    QueuePanel()
   }
 
   private coverSrc(): string {
@@ -217,8 +227,13 @@ export struct PlayerPage {
               .onClick(() => {
                 this.vm.next();
               })
-            Text('')
+            SymbolGlyph($r('sys.symbol.music_note_list'))
+              .fontSize(24)
+              .fontColor([Color.White])
               .width(56)
+              .onClick(() => {
+                this.showQueue = true;
+              })
           }
           .width('100%')
           .justifyContent(FlexAlign.SpaceEvenly)
@@ -236,5 +251,14 @@ export struct PlayerPage {
     .backgroundColor(PAGE_BG)
     .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
     .transition(TransitionEffect.translate({ y: '100%' }).animation({ duration: 250, curve: Curve.EaseOut }))
+    .bindSheet($$this.showQueue, this.QueueSheet, {
+      detents: [SheetSize.MEDIUM, SheetSize.LARGE],
+      preferType: SheetType.BOTTOM,
+      dragBar: true,
+      showClose: true,
+      title: { title: '播放列表' },
+      backgroundColor: PAGE_BG,
+      blurStyle: BlurStyle.COMPONENT_ULTRA_THICK
+    })
   }
 }

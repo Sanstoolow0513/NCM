@@ -106,11 +106,7 @@ export class PlayerService {
     if (songs.length === 0 || startIndex < 0 || startIndex >= songs.length) {
       return;
     }
-    this.queue = songs;
-    this.index = startIndex;
-    const s = this.snap();
-    s.queue = songs;
-    s.queueIndex = startIndex;
+    this.publishQueue(songs.slice(), startIndex);
     await this.playCurrent();
   }
 
@@ -121,6 +117,93 @@ export class PlayerService {
     this.index = index;
     this.snap().queueIndex = index;
     await this.playCurrent();
+  }
+
+  /** 空队列则直接开播；否则插入当前曲之后 */
+  insertNext(song: SongInfo): void {
+    if (this.queue.length === 0 || this.index < 0) {
+      this.playList([song], 0);
+      return;
+    }
+    const next: SongInfo[] = this.queue.slice();
+    next.splice(this.index + 1, 0, song);
+    this.publishQueue(next, this.index);
+    this.snap().showToast('已添加到下一首播放');
+  }
+
+  /** 空队列则直接开播；否则追加到队尾 */
+  append(song: SongInfo): void {
+    if (this.queue.length === 0 || this.index < 0) {
+      this.playList([song], 0);
+      return;
+    }
+    const next: SongInfo[] = this.queue.slice();
+    next.push(song);
+    this.publishQueue(next, this.index);
+    this.snap().showToast('已添加到播放列表');
+  }
+
+  removeAt(index: number): void {
+    if (index < 0 || index >= this.queue.length) {
+      return;
+    }
+    const removingCurrent: boolean = index === this.index;
+    const next: SongInfo[] = this.queue.slice();
+    next.splice(index, 1);
+    if (next.length === 0) {
+      this.stopAndReset();
+      return;
+    }
+    let newIndex: number = this.index;
+    if (removingCurrent) {
+      newIndex = index >= next.length ? next.length - 1 : index;
+      this.publishQueue(next, newIndex);
+      this.playCurrent();
+      return;
+    }
+    if (index < this.index) {
+      newIndex = this.index - 1;
+    }
+    this.publishQueue(next, newIndex);
+  }
+
+  clearQueue(): void {
+    this.stopAndReset();
+  }
+
+  private publishQueue(next: SongInfo[], index: number): void {
+    this.queue = next;
+    this.index = index;
+    const s = this.snap();
+    s.queue = next;
+    s.queueIndex = index;
+  }
+
+  private stopAndReset(): void {
+    this.playToken++;
+    this.pendingUrl = null;
+    this.failCount = 0;
+    this.queue = [];
+    this.index = -1;
+    const s = this.snap();
+    s.queue = [];
+    s.queueIndex = -1;
+    s.currentSong = null;
+    s.isPlaying = false;
+    s.positionMs = 0;
+    s.durationMs = 0;
+    if (this.avSession !== null) {
+      this.avSession.stopBackgroundTask();
+      this.avSession.updatePlaybackState(false, 0);
+    }
+    const p = this.avPlayer;
+    if (p !== null && this.avState !== 'idle') {
+      try {
+        p.reset();
+      } catch (e) {
+        console.error(`[PlayerService] reset failed: ${JSON.stringify(e)}`);
+      }
+    }
   }
 
   private async playCurrent(): Promise<void> {
