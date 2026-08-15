@@ -1,0 +1,60 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "page_bg",
+      "value": "#F5F5F7"
+    },
+    {
+      "name": "card_bg",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "text_primary",
+      "value": "#1A1A1A"
+    },
+    {
+      "name": "text_secondary",
+      "value": "#99000000"
+    },
+    {
+      "name": "accent",
+      "value": "#EC4141"
+    },
+    {
+      "name": "accent_soft",
+      "value": "#1AEC4141"
+    },
+    {
+      "name": "miniplayer_bg",
+      "value": "#CCFFFFFF"
+    },
+    {
+      "name": "blur_scrim",
+      "value": "#D9F5F5F7"
+    },
+    {
+      "name": "on_accent",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "divider",
+      "value": "#1A000000"
+    },
+    {
+      "name": "cover_placeholder",
+      "value": "#E8E8ED"
+    },
+    {
+      "name": "slider_track",
+      "value": "#33000000"
+    },
+    {
+      "name": "slider_block",
+      "value": "#EC4141"
+    }
+  ]
+}
