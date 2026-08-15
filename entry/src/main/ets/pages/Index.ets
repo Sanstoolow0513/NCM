@@ -7,7 +7,6 @@ import { DiscoverPage } from '../view/pages/DiscoverPage';
 import { MinePage } from '../view/pages/MinePage';
 import { PlayerPage } from '../view/pages/PlayerPage';
 import { PlaylistDetailPage } from '../view/pages/PlaylistDetailPage';
-import { SearchPage } from '../view/pages/SearchPage';
 import { SettingsPage } from '../view/pages/SettingsPage';
 import { StoreHub } from '../store/StoreHub';
 import { PlayerSnapshot } from '../store/PlayerSnapshot';
@@ -25,7 +24,6 @@ struct Index {
   @Local currentTab: number = 0;
   private tabsController: HdsTabsController = new HdsTabsController();
   private discoverTabIcon: SymbolGlyphModifier = new SymbolGlyphModifier($r('sys.symbol.square_grid_2x2'));
-  private searchTabIcon: SymbolGlyphModifier = new SymbolGlyphModifier($r('sys.symbol.magnifyingglass'));
   private mineTabIcon: SymbolGlyphModifier = new SymbolGlyphModifier($r('sys.symbol.person'));
   private hostWindow: window.Window | undefined = undefined;
 
@@ -108,11 +106,6 @@ struct Index {
             DiscoverPage()
           }
           .tabBar(new BottomTabBarStyle({ normal: this.discoverTabIcon }, '发现'))
-
-          TabContent() {
-            SearchPage()
-          }
-          .tabBar(new BottomTabBarStyle({ normal: this.searchTabIcon }, '搜索'))
 
           TabContent() {
             MinePage()
