@@ -5,6 +5,7 @@
 import { SongInfo } from '../../model/entity/models';
 import { PlaylistDetailViewModel } from '../../viewmodel/PlaylistDetailViewModel';
 import { SongRow } from '../components/SongRow';
+import { SafeNavTitle } from '../components/SafeNavTitle';
 import { ChromeInsets } from '../../common/utils/ChromeInsets';
 import {
   ACCENT_COLOR, BLUR_SCRIM, ON_ACCENT, PAGE_BG, PAGE_PAD, RADIUS_M, SPACE_L, SPACE_M, TEXT_PRIMARY,
@@ -33,6 +34,14 @@ export struct PlaylistDetailPage {
       this.getUIContext().getPromptAction().showToast({ message: this.vm.toastMessage });
       this.vm.toastMessage = '';
     }
+  }
+
+  @Builder
+  NavTitle() {
+    SafeNavTitle({
+      title: this.isAlbum ? '专辑' : '歌单',
+      navPathStack: this.navPathStack
+    })
   }
 
   @Builder
@@ -157,17 +166,15 @@ export struct PlaylistDetailPage {
           .layoutWeight(1)
           .width('100%')
           .scrollBar(BarState.Off)
-          .contentEndOffset(this.chrome.listEndOffset)
-          .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
-          .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
+          .contentEndOffset(SPACE_M + this.chrome.listEndOffset)
         }
         .width('100%')
         .height('100%')
       }
     }
-    .title(this.isAlbum ? '专辑' : '歌单')
+    .title({ builder: this.NavTitle, height: this.chrome.titleBarHeight() })
+    .hideBackButton(true)
     .hideToolBar(true)
     .backgroundColor(PAGE_BG)
-    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
   }
 }

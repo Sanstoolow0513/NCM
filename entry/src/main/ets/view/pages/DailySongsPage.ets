@@ -5,6 +5,7 @@
 import { SongInfo } from '../../model/entity/models';
 import { DailySongsViewModel } from '../../viewmodel/DailySongsViewModel';
 import { SongRow } from '../components/SongRow';
+import { SafeNavTitle } from '../components/SafeNavTitle';
 import { ChromeInsets } from '../../common/utils/ChromeInsets';
 import {
   ACCENT_COLOR, ON_ACCENT, PAGE_BG, PAGE_PAD, SPACE_L, SPACE_M, SPACE_S, TEXT_SECONDARY
@@ -18,6 +19,11 @@ export struct DailySongsPage {
 
   aboutToAppear(): void {
     this.vm.load();
+  }
+
+  @Builder
+  NavTitle() {
+    SafeNavTitle({ title: '每日推荐', navPathStack: this.navPathStack })
   }
 
   @Monitor('vm.toastMessage')
@@ -98,17 +104,15 @@ export struct DailySongsPage {
           .layoutWeight(1)
           .width('100%')
           .scrollBar(BarState.Off)
-          .contentEndOffset(this.chrome.listEndOffset)
-          .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
-          .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
+          .contentEndOffset(SPACE_M + this.chrome.listEndOffset)
         }
         .width('100%')
         .height('100%')
       }
     }
-    .title('每日推荐')
+    .title({ builder: this.NavTitle, height: this.chrome.titleBarHeight() })
+    .hideBackButton(true)
     .hideToolBar(true)
     .backgroundColor(PAGE_BG)
-    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
   }
 }

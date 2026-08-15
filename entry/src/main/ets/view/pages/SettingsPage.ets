@@ -7,6 +7,7 @@ import { StoreHub } from '../../store/StoreHub';
 import { SessionSnapshot } from '../../store/SessionSnapshot';
 import { ThemeSettings } from '../../store/ThemeSettings';
 import { ChromeInsets } from '../../common/utils/ChromeInsets';
+import { SafeNavTitle } from '../components/SafeNavTitle';
 import {
   ACCENT_COLOR, CARD_BG, DIVIDER_COLOR, PAGE_BG, PAGE_PAD, RADIUS_L, SPACE_L, SPACE_M, SPACE_S,
   SPACE_XL, TEXT_PRIMARY, TEXT_SECONDARY
@@ -58,6 +59,11 @@ export struct SettingsPage {
   @Local vm: SettingsViewModel = new SettingsViewModel();
   @Local session: SessionSnapshot = StoreHub.session();
   @Local theme: ThemeSettings = StoreHub.theme();
+
+  @Builder
+  NavTitle() {
+    SafeNavTitle({ title: '设置', navPathStack: this.navPathStack })
+  }
 
   @Monitor('vm.toastMessage')
   onToast(_mon: IMonitor): void {
@@ -308,7 +314,7 @@ export struct SettingsPage {
           .borderRadius(RADIUS_L)
         }
         .width('100%')
-        .padding({ left: SPACE_M, right: SPACE_M, bottom: this.chrome.listEndOffset })
+        .padding({ left: SPACE_M, right: SPACE_M, bottom: SPACE_M + this.chrome.listEndOffset })
         .alignItems(HorizontalAlign.Start)
       }
       .width('100%')
@@ -316,9 +322,9 @@ export struct SettingsPage {
       .scrollBar(BarState.Off)
       .align(Alignment.Top)
     }
-    .title('设置')
+    .title({ builder: this.NavTitle, height: this.chrome.titleBarHeight() })
+    .hideBackButton(true)
     .hideToolBar(true)
     .backgroundColor(PAGE_BG)
-    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
   }
 }

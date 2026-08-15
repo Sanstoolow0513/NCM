@@ -1,6 +1,6 @@
 /**
  * 发现页
- * 顶栏搜索 + 每日推荐沉浸卡（封面模糊头图底部播放/查看全部 + 预览歌曲）
+ * 顶栏搜索固定，下方滚动区放日推卡片（封面模糊头图 + 预览歌曲）
  */
 import { SongInfo } from '../../model/entity/models';
 import { DailySongsViewModel } from '../../viewmodel/DailySongsViewModel';
@@ -88,10 +88,52 @@ export struct DiscoverPage {
   }
 
   @Builder
+  SearchBar() {
+    Search({ value: this.searchVm.keyword, placeholder: '搜索歌曲、歌单、专辑' })
+      .placeholderColor(TEXT_SECONDARY)
+      .fontColor(TEXT_PRIMARY)
+      .backgroundColor(CARD_BG)
+      .height(40)
+      .width('100%')
+      .cancelButton({ style: CancelButtonStyle.INPUT })
+      .onChange((value: string) => {
+        this.searchVm.onKeywordChange(value);
+      })
+      .onSubmit((value: string) => {
+        this.searchVm.doSearch(value);
+      })
+  }
+
+  @Builder
+  StatusCard() {
+    Column() {
+      if (this.dailyVm.loading) {
+        LoadingProgress().width(40).height(40).color(TEXT_SECONDARY)
+      } else {
+        Text(this.dailyVm.error)
+          .fontSize(14)
+          .fontColor(TEXT_SECONDARY)
+        Button('重试')
+          .type(ButtonType.Capsule)
+          .controlSize(ControlSize.SMALL)
+          .margin({ top: SPACE_M })
+          .onClick(() => {
+            this.dailyVm.load();
+          })
+      }
+    }
+    .width('100%')
+    .height(220)
+    .justifyContent(FlexAlign.Center)
+    .backgroundColor(CARD_BG)
+    .borderRadius(RADIUS_L)
+    .shadow({ radius: 12, color: '#33000000', offsetY: 2 })
+  }
+
+  @Builder
   DailyHeroHeader() {
     Stack() {
       if (this.heroCover().length > 0) {
-        // 首曲封面强模糊打底，放大消除模糊边缘溢出
         Image(this.heroCover())
           .width('100%')
           .height('100%')
@@ -99,7 +141,6 @@ export struct DiscoverPage {
           .blur(30)
           .scale({ x: 1.2, y: 1.2 })
       } else {
-        // 无封面时降级为主色渐变底
         Column()
           .width('100%')
           .height('100%')
@@ -109,7 +150,6 @@ export struct DiscoverPage {
           })
       }
 
-      // 深色渐变蒙版，保证深浅色主题下白字均可读
       Column()
         .width('100%')
         .height('100%')
@@ -236,36 +276,6 @@ export struct DiscoverPage {
   }
 
   @Builder
-  DailyHeroArea() {
-    if (this.dailyVm.loading) {
-      Column() {
-        LoadingProgress().width(40).height(40).color(TEXT_SECONDARY)
-      }
-      .width('100%')
-      .height(220)
-      .justifyContent(FlexAlign.Center)
-    } else if (this.dailyVm.error.length > 0) {
-      Column() {
-        Text(this.dailyVm.error)
-          .fontSize(14)
-          .fontColor(TEXT_SECONDARY)
-        Button('重试')
-          .type(ButtonType.Capsule)
-          .controlSize(ControlSize.SMALL)
-          .margin({ top: SPACE_M })
-          .onClick(() => {
-            this.dailyVm.load();
-          })
-      }
-      .width('100%')
-      .height(220)
-      .justifyContent(FlexAlign.Center)
-    } else {
-      this.DailyRecommendCard()
-    }
-  }
-
-  @Builder
   LoginGuideCard() {
     Row() {
       SymbolGlyph($r('sys.symbol.calendar'))
@@ -288,24 +298,36 @@ export struct DiscoverPage {
     .padding(SPACE_L)
     .backgroundColor(CARD_BG)
     .borderRadius(RADIUS_L)
+    .shadow({ radius: 12, color: '#33000000', offsetY: 2 })
+  }
+
+  @Builder
+  HomeScroll() {
+    Scroll() {
+      Column() {
+        if (!this.isLoggedIn()) {
+          this.LoginGuideCard()
+        } else if (this.dailyVm.loading || this.dailyVm.error.length > 0) {
+          this.StatusCard()
+        } else {
+          this.DailyRecommendCard()
+        }
+      }
+      .width('100%')
+      .alignItems(HorizontalAlign.Start)
+      .padding({ left: PAGE_PAD, right: PAGE_PAD, bottom: SPACE_M + this.chrome.listEndOffset })
+    }
+    .width('100%')
+    .layoutWeight(1)
+    .scrollBar(BarState.Off)
+    .align(Alignment.Top)
+    .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
   }
 
   build() {
     Column({ space: SPACE_M }) {
       Column() {
-        Search({ value: this.searchVm.keyword, placeholder: '搜索歌曲、歌单、专辑' })
-          .placeholderColor(TEXT_SECONDARY)
-          .fontColor(TEXT_PRIMARY)
-          .backgroundColor(CARD_BG)
-          .height(40)
-          .width('100%')
-          .cancelButton({ style: CancelButtonStyle.INPUT })
-          .onChange((value: string) => {
-            this.searchVm.onKeywordChange(value);
-          })
-          .onSubmit((value: string) => {
-            this.searchVm.doSearch(value);
-          })
+        this.SearchBar()
       }
       .width('100%')
       .padding({ left: PAGE_PAD, right: PAGE_PAD })
@@ -320,28 +342,12 @@ export struct DiscoverPage {
       } else if (this.searchVm.searched) {
         SearchResultPanel({ vm: this.searchVm })
       } else {
-        Scroll() {
-          Column() {
-            if (this.isLoggedIn()) {
-              this.DailyHeroArea()
-            } else {
-              this.LoginGuideCard()
-            }
-          }
-          .width('100%')
-          .alignItems(HorizontalAlign.Start)
-          .padding({ left: PAGE_PAD, right: PAGE_PAD, bottom: this.chrome.listEndOffset })
-        }
-        .width('100%')
-        .layoutWeight(1)
-        .scrollBar(BarState.Off)
-        .align(Alignment.Top)
-        .edgeEffect(EdgeEffect.Spring, { alwaysEnabled: true })
+        this.HomeScroll()
       }
     }
     .width('100%')
     .height('100%')
-    .padding({ top: SPACE_M + this.chrome.safeTop })
+    .padding({ top: SPACE_M })
     .backgroundColor(PAGE_BG)
   }
 }

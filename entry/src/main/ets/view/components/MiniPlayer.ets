@@ -1,20 +1,18 @@
 /**
- * 全局迷你播放器悬浮条
+ * 全局迷你播放条
  * 材质模糊胶囊 + 底部播放进度细条，点击封面/文字区以 geometryTransition 一镜到底展开完整播放页
  */
 import { PlayerService } from '../../service/player/PlayerService';
 import { StoreHub } from '../../store/StoreHub';
 import { PlayerSnapshot } from '../../store/PlayerSnapshot';
-import { ChromeInsets } from '../../common/utils/ChromeInsets';
 import { QueuePanel } from './QueuePanel';
 import {
-  ACCENT_COLOR, COVER_PLACEHOLDER, MINIPLAYER_BG, PAGE_BG, PLAYER_COVER_GEOMETRY_ID, PLAYER_EXPAND_DURATION,
-  RADIUS_S, TEXT_PRIMARY, TEXT_SECONDARY
+  ACCENT_COLOR, COVER_PLACEHOLDER, MINIPLAYER_BG, MINIPLAYER_HEIGHT, PAGE_BG, PLAYER_COVER_GEOMETRY_ID,
+  PLAYER_EXPAND_DURATION, RADIUS_S, TEXT_PRIMARY, TEXT_SECONDARY
 } from '../../common/utils/format';
 
 @ComponentV2
 export struct MiniPlayer {
-  @Consumer('chromeInsets') chrome: ChromeInsets = new ChromeInsets();
   @Local player: PlayerSnapshot = StoreHub.player();
   @Local showQueue: boolean = false;
 
@@ -120,15 +118,12 @@ export struct MiniPlayer {
         .backgroundColor(ACCENT_COLOR)
     }
     .width('94%')
-    .height(56)
+    .height(MINIPLAYER_HEIGHT)
     .borderRadius(28)
     .clip(true)
     .backgroundColor(MINIPLAYER_BG)
     .backgroundBlurStyle(BlurStyle.Regular)
     .shadow({ radius: 12, color: '#33000000', offsetY: 2 })
-    .onAreaChange((_oldValue: Area, newValue: Area) => {
-      this.chrome.setMiniPlayerHeight(newValue.height as number);
-    })
     .bindSheet($$this.showQueue, this.QueueSheet, {
       detents: [SheetSize.MEDIUM, SheetSize.LARGE],
       preferType: SheetType.BOTTOM,

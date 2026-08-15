@@ -13,6 +13,7 @@ const KEY_THEME: string = 'ThemeSettings';
 export class StoreHub {
   private static appContext: common.ApplicationContext | null = null;
   private static fontReady: boolean = false;
+  private static colorModeListener: (() => void) | null = null;
 
   static player(): PlayerSnapshot {
     return AppStorageV2.connect<PlayerSnapshot>(PlayerSnapshot, KEY_PLAYER, () => new PlayerSnapshot())!;
@@ -70,6 +71,18 @@ export class StoreHub {
       StoreHub.appContext.setColorMode(colorMode);
     } catch (err) {
       console.error(`[StoreHub] setColorMode failed: ${JSON.stringify(err)}`);
+    }
+    StoreHub.notifyColorModeChanged();
+  }
+
+  /** 系统深浅色变化时刷新状态栏图标色；勿写入 ThemeSettings（会持久化） */
+  static setColorModeListener(cb: (() => void) | null): void {
+    StoreHub.colorModeListener = cb;
+  }
+
+  static notifyColorModeChanged(): void {
+    if (StoreHub.colorModeListener !== null) {
+      StoreHub.colorModeListener();
     }
   }
 

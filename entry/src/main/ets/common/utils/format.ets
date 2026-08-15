@@ -19,22 +19,22 @@ export function errMsg(e: Object): string {
   return m !== undefined && m.length > 0 ? m : JSON.stringify(e);
 }
 
-/** 全局主色（网易云红） */
+/** 全局主色（网易云红，不跟随系统色板） */
 export const ACCENT_COLOR = $r('app.color.accent');
 /** 红底上的文字/图标 */
 export const ON_ACCENT = $r('app.color.on_accent');
-/** 页面背景 */
-export const PAGE_BG = $r('app.color.page_bg');
+/** 页面背景：系统色，随 ColorMode 自动切换 */
+export const PAGE_BG = $r('sys.color.ohos_id_color_background');
 /** 卡片/控件背景 */
-export const CARD_BG = $r('app.color.card_bg');
+export const CARD_BG = $r('sys.color.ohos_id_color_sub_background');
 /** 主文字颜色 */
-export const TEXT_PRIMARY = $r('app.color.text_primary');
+export const TEXT_PRIMARY = $r('sys.color.ohos_id_color_text_primary');
 /** 次级文字颜色 */
-export const TEXT_SECONDARY = $r('app.color.text_secondary');
+export const TEXT_SECONDARY = $r('sys.color.ohos_id_color_text_secondary');
 /** 分割线 */
-export const DIVIDER_COLOR = $r('app.color.divider');
+export const DIVIDER_COLOR = $r('sys.color.ohos_id_color_list_separator');
 /** 封面占位底色 */
-export const COVER_PLACEHOLDER = $r('app.color.cover_placeholder');
+export const COVER_PLACEHOLDER = $r('sys.color.ohos_id_color_component_normal');
 /** 进度条未选中轨道 */
 export const SLIDER_TRACK = $r('app.color.slider_track');
 /** 进度条滑块 */
@@ -47,8 +47,8 @@ export const MINIPLAYER_BG = $r('app.color.miniplayer_bg');
 export const BLUR_SCRIM = $r('app.color.blur_scrim');
 /** 底部手势条（小白条）占位，getWindowAvoidArea 尚未返回时的回退值 */
 export const NAV_INDICATOR_PAD: number = 20;
-/** 文本 TabBar 内容高度回退（不含小白条；小白条由布局安全区处理） */
-export const TAB_BAR_HEIGHT: number = 56;
+/** 子页标题栏内容高度（不含状态栏） */
+export const NAV_TITLE_CONTENT: number = 56;
 /** 迷你播放条高度 */
 export const MINIPLAYER_HEIGHT: number = 56;
 /** 迷你播放条与 Tab 栏 / 布局安全区底边之间的间隙 */
