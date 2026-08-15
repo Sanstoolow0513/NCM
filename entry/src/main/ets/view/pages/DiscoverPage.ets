@@ -1,6 +1,6 @@
 /**
  * 发现页
- * 顶栏搜索 + 每日推荐沉浸卡（封面模糊头图 + 预览歌曲 + 查看全部）
+ * 顶栏搜索 + 每日推荐沉浸卡（封面模糊头图底部播放/查看全部 + 预览歌曲）
  */
 import { SongInfo } from '../../model/entity/models';
 import { DailySongsViewModel } from '../../viewmodel/DailySongsViewModel';
@@ -12,7 +12,7 @@ import { ChromeInsets } from '../../common/utils/ChromeInsets';
 import { SongRow } from '../components/SongRow';
 import { SearchResultPanel } from '../components/SearchResultPanel';
 import {
-  ACCENT_COLOR, ACCENT_SOFT, CARD_BG, DIVIDER_COLOR, PAGE_BG, PAGE_PAD, RADIUS_L, SPACE_L, SPACE_M,
+  ACCENT_COLOR, CARD_BG, ON_ACCENT, PAGE_BG, PAGE_PAD, RADIUS_L, SPACE_L, SPACE_M,
   SPACE_S, TEXT_PRIMARY, TEXT_SECONDARY
 } from '../../common/utils/format';
 
@@ -88,13 +88,6 @@ export struct DiscoverPage {
   }
 
   @Builder
-  InsetDivider() {
-    Divider()
-      .color(DIVIDER_COLOR)
-      .margin({ left: PAGE_PAD })
-  }
-
-  @Builder
   DailyHeroHeader() {
     Stack() {
       if (this.heroCover().length > 0) {
@@ -126,55 +119,84 @@ export struct DiscoverPage {
         })
 
       Column() {
-        Row() {
-          Column() {
-            Text(this.todayDay)
-              .fontSize(34)
-              .fontWeight(FontWeight.Bold)
-              .fontColor(Color.White)
-            Text(this.weekday())
-              .fontSize(12)
-              .fontColor('#B3FFFFFF')
-              .margin({ top: 2 })
-          }
-          .alignItems(HorizontalAlign.Start)
+        Column() {
+          Text(this.todayDay)
+            .fontSize(34)
+            .fontWeight(FontWeight.Bold)
+            .fontColor(Color.White)
+          Text(this.weekday())
+            .fontSize(12)
+            .fontColor('#B3FFFFFF')
+            .margin({ top: 2 })
 
           Blank()
 
-          Button({ type: ButtonType.Capsule }) {
-            Row() {
-              SymbolGlyph($r('sys.symbol.play_fill'))
-                .fontSize(13)
-                .fontColor([Color.White])
-              Text('播放全部')
-                .fontSize(13)
-                .fontColor(Color.White)
-                .margin({ left: 4 })
-            }
-            .alignItems(VerticalAlign.Center)
-          }
-          .controlSize(ControlSize.SMALL)
-          .backgroundColor('#33FFFFFF')
-          .backgroundBlurStyle(BlurStyle.Regular)
-          .onClick(() => {
-            this.dailyVm.playAll();
-          })
+          Text('每日推荐')
+            .fontSize(20)
+            .fontWeight(FontWeight.Medium)
+            .fontColor(Color.White)
+          Text(this.heroSubtitle())
+            .fontSize(12)
+            .fontColor('#B3FFFFFF')
+            .maxLines(1)
+            .textOverflow({ overflow: TextOverflow.Ellipsis })
+            .margin({ top: 4 })
         }
         .width('100%')
-        .alignItems(VerticalAlign.Center)
+        .layoutWeight(1)
+        .alignItems(HorizontalAlign.Start)
+        .onClick(() => {
+          this.openDailySongs();
+        })
 
-        Blank()
+        if (this.dailyVm.songs.length > 0) {
+          Row({ space: SPACE_S }) {
+            Button({ type: ButtonType.Capsule }) {
+              Row() {
+                SymbolGlyph($r('sys.symbol.play_fill'))
+                  .fontSize(14)
+                  .fontColor([ON_ACCENT])
+                Text('播放全部')
+                  .fontSize(13)
+                  .fontColor(ON_ACCENT)
+                  .margin({ left: 4 })
+              }
+              .alignItems(VerticalAlign.Center)
+            }
+            .layoutWeight(1)
+            .height(36)
+            .padding({ left: SPACE_L, right: SPACE_L })
+            .backgroundColor(ACCENT_COLOR)
+            .onClick(() => {
+              this.dailyVm.playAll();
+            })
 
-        Text('每日推荐')
-          .fontSize(20)
-          .fontWeight(FontWeight.Medium)
-          .fontColor(Color.White)
-        Text(this.heroSubtitle())
-          .fontSize(12)
-          .fontColor('#B3FFFFFF')
-          .maxLines(1)
-          .textOverflow({ overflow: TextOverflow.Ellipsis })
-          .margin({ top: 4 })
+            Button({ type: ButtonType.Capsule }) {
+              Row() {
+                Text(`查看全部 · ${this.dailyVm.songs.length} 首`)
+                  .fontSize(13)
+                  .fontColor(Color.White)
+                  .maxLines(1)
+                  .textOverflow({ overflow: TextOverflow.Ellipsis })
+                SymbolGlyph($r('sys.symbol.chevron_right'))
+                  .fontSize(12)
+                  .fontColor([Color.White])
+                  .margin({ left: 2 })
+              }
+              .alignItems(VerticalAlign.Center)
+            }
+            .layoutWeight(1)
+            .height(36)
+            .padding({ left: SPACE_L, right: SPACE_L })
+            .backgroundColor('#33FFFFFF')
+            .backgroundBlurStyle(BlurStyle.Regular)
+            .onClick(() => {
+              this.openDailySongs();
+            })
+          }
+          .width('100%')
+          .margin({ top: SPACE_M })
+        }
       }
       .width('100%')
       .height('100%')
@@ -182,11 +204,8 @@ export struct DiscoverPage {
       .alignItems(HorizontalAlign.Start)
     }
     .width('100%')
-    .height(168)
+    .height(200)
     .clip(true)
-    .onClick(() => {
-      this.openDailySongs();
-    })
   }
 
   @Builder
@@ -207,30 +226,6 @@ export struct DiscoverPage {
           }, (song: SongInfo) => song.id.toString())
         }
         .width('100%')
-
-        if (this.dailyVm.songs.length > this.dailyVm.previewSongs.length) {
-          this.InsetDivider()
-
-          Row() {
-            Text(`查看全部 · ${this.dailyVm.songs.length} 首`)
-              .fontSize(13)
-              .fontColor(ACCENT_COLOR)
-            SymbolGlyph($r('sys.symbol.chevron_right'))
-              .fontSize(12)
-              .fontColor([ACCENT_COLOR])
-              .margin({ left: 2 })
-          }
-          .width('100%')
-          .justifyContent(FlexAlign.Center)
-          .alignItems(VerticalAlign.Center)
-          .padding({ top: 10, bottom: 10 })
-          .backgroundColor(ACCENT_SOFT)
-          .borderRadius(20)
-          .margin({ left: PAGE_PAD, right: PAGE_PAD, top: SPACE_M, bottom: SPACE_M })
-          .onClick(() => {
-            this.openDailySongs();
-          })
-        }
       }
     }
     .width('100%')
