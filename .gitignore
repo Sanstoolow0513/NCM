@@ -1,12 +1,47 @@
+# HarmonyOS / DevEco Studio
 /node_modules
 /oh_modules
+**/node_modules
+**/oh_modules
 /local.properties
 /.idea
+**/.idea
 **/build
 /.hvigor
 .cxx
+**/.cxx
 /.clangd
 /.clang-format
 /.clang-tidy
 **/.test
 /.appanalyzer
+**/.preview
+*.iml
+
+# 打包产物（拷出 build 目录时仍忽略）
+*.hap
+*.hsp
+*.app
+*.har
+
+# 签名与证书（真机自动签名材料）
+*.p12
+*.pem
+*.key
+*.cer
+*.csr
+*.p7b
+/material
+**/material
+
+# 系统与编辑器
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*.log
+
+# 本地 AI 代理技能与依赖（不随应用分发）
+.cursor/
+.kimi-code/
+.opencode/
