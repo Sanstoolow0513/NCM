@@ -6,13 +6,13 @@
 
 这是一个 **HarmonyOS（鸿蒙）第三方网易云音乐（NCM）客户端**，使用 ArkTS + ArkUI 开发，Stage 模型（`apiType: "stageMode"`）。
 
-- 包名：`com.example.ncm`（见 `AppScope/app.json5`），当前为模板默认值，版本 `1.0.0`
+- 包名：`sanstoolow.netesohm.huawei`（见 `AppScope/app.json5`），版本 `1.0.0`
 - SDK：`targetSdkVersion` / `compatibleSdkVersion` 均为 `6.1.1(24)`（API 24），`runtimeOS: HarmonyOS`
 - 设备类型：仅 `phone`
 - 界面语言：中文；代码注释主要使用中文，新增注释请保持一致
 - 只有一个模块：`entry`（`build-profile.json5`）
 
-应用功能：发现（Banner、日推入口、热门歌单）、搜索、日推（每日推荐歌曲）、"我的"歌单、歌单/专辑详情、扫码/账号登录、完整播放器（封面模糊沉浸背景、歌词滚动、循环模式、迷你播放器）、主题设置（浅色/深色/跟随系统）。音频播放声明了 `backgroundModes: audioPlayback` 与 `KEEP_BACKGROUND_RUNNING` 权限，支持后台播放。
+应用功能：发现（顶栏搜索 + 日推入口卡与预览歌曲，点击进入完整日推）、日推（每日推荐歌曲）、"我的"歌单、歌单/专辑详情、扫码/账号登录、完整播放器（封面模糊沉浸背景、歌词滚动、循环模式、迷你播放器、播放队列）、设置（浅色/深色/跟随系统、字号、字体）。音频播放声明了 `backgroundModes: audioPlayback` 与 `KEEP_BACKGROUND_RUNNING` 权限，支持后台播放。
 
 ## 技术栈
 
@@ -36,17 +36,18 @@
 
 分层为 MVVM，单向依赖：`view → viewmodel → model(repository) → model(source)`，全局状态在 `store`，播放服务在 `service`。
 
-- `entryability/EntryAbility.ets`：入口 Ability。`onWindowStageCreate` 中初始化 `NcmHttp`、`PlayerService`，启动时若已登录则校验登录态
-- `pages/Index.ets`：唯一 `@Entry` 页面（路由见 `resources/base/profile/main_pages.json`）。底部 `HdsTabs`（发现 / 搜索 / 我的）+ `Navigation`/`NavPathStack` 栈式导航 + 全局 `MiniPlayer` 悬浮层
+- `entryability/EntryAbility.ets`：入口 Ability。`onWindowStageCreate` 中初始化 `NcmHttp`、`PlayerService`，窗口就绪后 `StoreHub.markFontReady()` 应用字体，启动时若已登录则校验登录态
+- `pages/Index.ets`：唯一 `@Entry` 页面（路由见 `resources/base/profile/main_pages.json`）。底部 `HdsTabs`（发现 / 我的）+ `Navigation`/`NavPathStack` 栈式导航 + 全局 `MiniPlayer` 悬浮层；`ChromeInsets` 负责底部避让
 - `common/router/`：路由常量（`RouteName`）与参数类型（`RouteParams`），新增页面路由在此登记并在 `Index.ets` 的 `PageMap` 中映射
-- `common/utils/format.ets`：格式化与公共 UI 常量/设计 token（颜色如 `PAGE_BG`、`ACCENT_SOFT`，圆角 `RADIUS_*`、间距 `SPACE_*`、页面边距 `PAGE_PAD`、`NAV_INDICATOR_PAD`）
+- `common/utils/format.ets`：格式化与公共 UI 常量/设计 token（颜色如 `PAGE_BG`、`ACCENT_SOFT`，圆角 `RADIUS_*`、间距 `SPACE_*`、页面边距 `PAGE_PAD`、`NAV_INDICATOR_PAD`、`TAB_BAR_HEIGHT`）
+- `common/utils/ChromeInsets.ets`：底部沉浸层占位（系统导航条、Tab 栏、迷你播放条）
 - `model/source/`：网络底层——`NcmHttp.ets`（统一 POST 入口、Cookie/csrf 管理）、`crypto.ets`（weapi/eapi 加密）、`cookiejar.ets`（Cookie 持久化）、`NcmParsers.ets`、`json.ets`
 - `model/repository/`：业务接口层——`AuthRepository`（登录）、`CatalogRepository`（歌单/专辑）、`MediaRepository`（歌曲 URL/歌词）、`SearchRepository`（搜索）。均为单例（`XxxRepository.get()`）
 - `model/entity/models.ets`：数据模型与歌词解析。DTO 是普通 class，**不加** `@ObservedV2`，UI 通过整引用替换刷新
 - `store/`：全局状态。`StoreHub` 统一入口：`player()` / `session()` 用 `AppStorageV2.connect`，`theme()` 用 `PersistenceV2.connect`（持久化）。`PlayerSnapshot`、`SessionSnapshot`、`ThemeSettings` 为 `@ObservedV2` 快照类
 - `service/player/`：`PlayerService`（AVPlayer 封装 + 播放队列 + 循环模式 + 失败跳转保护）、`AvSessionManager`（媒体会话/控制中心）
-- `view/pages/`：各页面组件（`DiscoverPage`（首页：Banner + 日推 Hero + 热门歌单）、`SearchPage`（纯搜索）、`MinePage`（用户卡 + 歌单货架）、`DailySongsPage`、`PlaylistDetailPage`、`PlayerPage`、`SettingsPage`）
-- `view/components/`：复用组件（`MiniPlayer`、`SongRow`、`PlaylistShelf`（歌单横滑货架）、`LoginPanel`）
+- `view/pages/`：各页面组件（`DiscoverPage`（顶栏搜索 + 日推入口卡与预览歌曲）、`MinePage`（用户行 + 纵向歌单列表）、`DailySongsPage`、`PlaylistDetailPage`、`PlayerPage`、`SettingsPage`）
+- `view/components/`：复用组件（`MiniPlayer`、`SongRow`、`PlaylistRow`、`SearchResultPanel`、`QueuePanel`、`LoginPanel`）
 - `viewmodel/`：每页一个 ViewModel（`@ObservedV2` + `@Trace`），页面持有的状态与业务调用都在这一层
 
 ## 编码约定
@@ -71,4 +72,4 @@
 - 请求全部发往 `music.163.com` / `interface.music.163.com`，UA 伪装为 iPhone 客户端；改动网络层需保持 weapi/eapi 加密协议与 header 伪装一致，否则接口会被拒
 - 权限仅 `INTERNET` 与 `KEEP_BACKGROUND_RUNNING`（`module.json5`），新增权限需同步更新该文件
 - `oh_modules/`、`build/`、`.hvigor/` 等目录已 gitignore，不要提交
-- 本目录尚未初始化为 git 仓库；若日后初始化，提交信息建议用中文、简明描述改动
+- 提交信息用中文、简明描述改动原因
