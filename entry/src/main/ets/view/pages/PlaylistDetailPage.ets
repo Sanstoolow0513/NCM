@@ -7,9 +7,12 @@ import { PlaylistDetailViewModel } from '../../viewmodel/PlaylistDetailViewModel
 import { SongRow } from '../components/SongRow';
 import { ChromeInsets } from '../../common/utils/ChromeInsets';
 import {
-  ACCENT_COLOR, BLUR_SCRIM, ON_ACCENT, PAGE_BG, PAGE_PAD, RADIUS_M, SPACE_L, SPACE_M, SPACE_S, TEXT_PRIMARY,
+  ACCENT_COLOR, BLUR_SCRIM, ON_ACCENT, PAGE_BG, PAGE_PAD, RADIUS_M, SPACE_L, SPACE_M, TEXT_PRIMARY,
   TEXT_SECONDARY
 } from '../../common/utils/format';
+
+/** 详情头封面边长；头部高度随封面与内边距撑开，避免写死 210 在标题栏下留白 */
+const HEADER_COVER: number = 120;
 
 @ComponentV2
 export struct PlaylistDetailPage {
@@ -35,22 +38,22 @@ export struct PlaylistDetailPage {
   @Builder
   DetailHeader(coverUrl: string, name: string, description: string, songCount: number) {
     Stack({ alignContent: Alignment.TopStart }) {
-      // 封面模糊背景 + 页面色蒙版
+      // 封面模糊打底，略放大以消除 blur 边缘
       Image(coverUrl)
         .width('100%')
-        .height(210)
+        .height('100%')
         .objectFit(ImageFit.Cover)
         .blur(40)
-      Column() {
-      }
-      .width('100%')
-      .height(210)
-      .backgroundColor(BLUR_SCRIM)
+        .scale({ x: 1.2, y: 1.2 })
+      Column()
+        .width('100%')
+        .height('100%')
+        .backgroundColor(BLUR_SCRIM)
 
       Row() {
         Image(coverUrl)
-          .width(120)
-          .height(120)
+          .width(HEADER_COVER)
+          .height(HEADER_COVER)
           .borderRadius(RADIUS_M)
           .objectFit(ImageFit.Cover)
           .shadow({ radius: 16, color: '#33000000', offsetY: 4 })
@@ -61,12 +64,14 @@ export struct PlaylistDetailPage {
             .fontColor(TEXT_PRIMARY)
             .maxLines(2)
             .textOverflow({ overflow: TextOverflow.Ellipsis })
-          Text(description)
-            .fontSize(12)
-            .fontColor(TEXT_SECONDARY)
-            .maxLines(3)
-            .textOverflow({ overflow: TextOverflow.Ellipsis })
-            .margin({ top: 6 })
+          if (description.length > 0) {
+            Text(description)
+              .fontSize(12)
+              .fontColor(TEXT_SECONDARY)
+              .maxLines(2)
+              .textOverflow({ overflow: TextOverflow.Ellipsis })
+              .margin({ top: 6 })
+          }
           Button({ type: ButtonType.Capsule }) {
             Row() {
               SymbolGlyph($r('sys.symbol.play_fill'))
@@ -88,13 +93,17 @@ export struct PlaylistDetailPage {
           })
         }
         .layoutWeight(1)
+        .height(HEADER_COVER)
+        .justifyContent(FlexAlign.Start)
         .alignItems(HorizontalAlign.Start)
         .margin({ left: 14 })
       }
       .width('100%')
-      .padding({ left: PAGE_PAD, right: PAGE_PAD, top: SPACE_S, bottom: SPACE_M })
+      .alignItems(VerticalAlign.Top)
+      .padding({ left: PAGE_PAD, right: PAGE_PAD, top: SPACE_M, bottom: SPACE_M })
     }
     .width('100%')
+    .height(HEADER_COVER + SPACE_M + SPACE_M)
     .clip(true)
   }
 
