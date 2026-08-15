@@ -233,7 +233,6 @@ export struct DiscoverPage {
     .borderRadius(RADIUS_L)
     .clip(true)
     .shadow({ radius: 12, color: '#33000000', offsetY: 2 })
-    .margin({ top: SPACE_M })
   }
 
   @Builder
@@ -245,7 +244,6 @@ export struct DiscoverPage {
       .width('100%')
       .height(220)
       .justifyContent(FlexAlign.Center)
-      .margin({ top: SPACE_M })
     } else if (this.dailyVm.error.length > 0) {
       Column() {
         Text(this.dailyVm.error)
@@ -290,25 +288,27 @@ export struct DiscoverPage {
     .padding(SPACE_L)
     .backgroundColor(CARD_BG)
     .borderRadius(RADIUS_L)
-    .margin({ top: SPACE_M })
   }
 
   build() {
-    Column() {
-      Search({ value: this.searchVm.keyword, placeholder: '搜索歌曲、歌单、专辑' })
-        .placeholderColor(TEXT_SECONDARY)
-        .fontColor(TEXT_PRIMARY)
-        .backgroundColor(CARD_BG)
-        .height(40)
-        .width('100%')
-        .cancelButton({ style: CancelButtonStyle.INPUT })
-        .margin({ left: PAGE_PAD, right: PAGE_PAD, top: SPACE_S })
-        .onChange((value: string) => {
-          this.searchVm.onKeywordChange(value);
-        })
-        .onSubmit((value: string) => {
-          this.searchVm.doSearch(value);
-        })
+    Column({ space: SPACE_M }) {
+      Column() {
+        Search({ value: this.searchVm.keyword, placeholder: '搜索歌曲、歌单、专辑' })
+          .placeholderColor(TEXT_SECONDARY)
+          .fontColor(TEXT_PRIMARY)
+          .backgroundColor(CARD_BG)
+          .height(40)
+          .width('100%')
+          .cancelButton({ style: CancelButtonStyle.INPUT })
+          .onChange((value: string) => {
+            this.searchVm.onKeywordChange(value);
+          })
+          .onSubmit((value: string) => {
+            this.searchVm.doSearch(value);
+          })
+      }
+      .width('100%')
+      .padding({ left: PAGE_PAD, right: PAGE_PAD })
 
       if (this.searchVm.loading) {
         Column() {
@@ -330,7 +330,7 @@ export struct DiscoverPage {
           }
           .width('100%')
           .alignItems(HorizontalAlign.Start)
-          .padding({ left: PAGE_PAD, right: PAGE_PAD, top: SPACE_M, bottom: this.chrome.listEndOffset })
+          .padding({ left: PAGE_PAD, right: PAGE_PAD, bottom: this.chrome.listEndOffset })
         }
         .width('100%')
         .layoutWeight(1)
@@ -341,6 +341,7 @@ export struct DiscoverPage {
     }
     .width('100%')
     .height('100%')
+    .padding({ top: SPACE_M + this.chrome.safeTop })
     .backgroundColor(PAGE_BG)
   }
 }

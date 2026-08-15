@@ -1,20 +1,19 @@
 /**
  * 全局迷你播放器悬浮条
- * 材质模糊胶囊 + 底部播放进度细条，点击封面/文字区进入完整播放页
+ * 材质模糊胶囊 + 底部播放进度细条，点击封面/文字区以 geometryTransition 一镜到底展开完整播放页
  */
 import { PlayerService } from '../../service/player/PlayerService';
 import { StoreHub } from '../../store/StoreHub';
 import { PlayerSnapshot } from '../../store/PlayerSnapshot';
-import { RouteName } from '../../common/router/RouteName';
 import { ChromeInsets } from '../../common/utils/ChromeInsets';
 import { QueuePanel } from './QueuePanel';
 import {
-  ACCENT_COLOR, COVER_PLACEHOLDER, MINIPLAYER_BG, PAGE_BG, RADIUS_S, TEXT_PRIMARY, TEXT_SECONDARY
+  ACCENT_COLOR, COVER_PLACEHOLDER, MINIPLAYER_BG, PAGE_BG, PLAYER_COVER_GEOMETRY_ID, PLAYER_EXPAND_DURATION,
+  RADIUS_S, TEXT_PRIMARY, TEXT_SECONDARY
 } from '../../common/utils/format';
 
 @ComponentV2
 export struct MiniPlayer {
-  @Param navPathStack: NavPathStack = new NavPathStack();
   @Consumer('chromeInsets') chrome: ChromeInsets = new ChromeInsets();
   @Local player: PlayerSnapshot = StoreHub.player();
   @Local showQueue: boolean = false;
@@ -31,8 +30,12 @@ export struct MiniPlayer {
     QueuePanel()
   }
 
-  private openPlayer(): void {
-    this.navPathStack.pushPath({ name: RouteName.PLAYER });
+  private coverSrc(): string {
+    const picUrl: string = this.player.currentSong?.picUrl ?? '';
+    if (picUrl.length === 0) {
+      return '';
+    }
+    return `${picUrl}?param=96y96`;
   }
 
   private progressPercent(): string {
@@ -47,11 +50,18 @@ export struct MiniPlayer {
     Stack({ alignContent: Alignment.BottomStart }) {
       Row() {
         Row() {
-          Image(this.player.currentSong?.picUrl ?? '')
+          Image(this.coverSrc())
             .width(42)
             .height(42)
             .borderRadius(RADIUS_S)
+            .clip(true)
+            .objectFit(ImageFit.Cover)
             .backgroundColor(COVER_PLACEHOLDER)
+            .geometryTransition(PLAYER_COVER_GEOMETRY_ID)
+            .transition(TransitionEffect.OPACITY.animation({
+              duration: PLAYER_EXPAND_DURATION,
+              curve: Curve.Friction
+            }))
             .margin({ left: 10 })
           Column() {
             Text(this.player.currentSong?.name ?? '')
@@ -73,7 +83,9 @@ export struct MiniPlayer {
         .height('100%')
         .alignItems(VerticalAlign.Center)
         .onClick(() => {
-          this.openPlayer();
+          this.getUIContext().animateTo({ duration: PLAYER_EXPAND_DURATION, curve: Curve.Friction }, () => {
+            this.player.fullPlayerOpen = true;
+          });
         })
 
         SymbolGlyph(this.player.isPlaying ? $r('sys.symbol.pause_fill') : $r('sys.symbol.play_fill'))

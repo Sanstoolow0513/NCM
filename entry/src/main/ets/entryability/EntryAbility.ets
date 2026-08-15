@@ -39,22 +39,22 @@ export default class EntryAbility extends UIAbility {
     NcmHttp.get().init(this.context);
     PlayerService.get().init(this.context);
 
-    windowStage.loadContent('pages/Index', (err) => {
-      if (err.code) {
-        hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
-        return;
-      }
-      hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
-      StoreHub.markFontReady();
-      windowStage.getMainWindow().then((mainWindow: window.Window) => {
+    windowStage.getMainWindow().then((mainWindow: window.Window) => {
+      mainWindow.setWindowLayoutFullScreen(true).then(() => {
         mainWindow.setWindowSystemBarProperties({
+          statusBarColor: '#00000000',
           navigationBarColor: '#00000000'
         }).catch((barErr: Error) => {
           hilog.warn(DOMAIN, 'testTag', 'setWindowSystemBarProperties failed: %{public}s', JSON.stringify(barErr));
         });
-      }).catch((winErr: Error) => {
-        hilog.warn(DOMAIN, 'testTag', 'getMainWindow failed: %{public}s', JSON.stringify(winErr));
+        this.loadIndex(windowStage);
+      }).catch((fsErr: Error) => {
+        hilog.warn(DOMAIN, 'testTag', 'setWindowLayoutFullScreen failed: %{public}s', JSON.stringify(fsErr));
+        this.loadIndex(windowStage);
       });
+    }).catch((winErr: Error) => {
+      hilog.warn(DOMAIN, 'testTag', 'getMainWindow failed: %{public}s', JSON.stringify(winErr));
+      this.loadIndex(windowStage);
     });
 
     if (NcmHttp.get().isLoggedIn()) {
@@ -69,6 +69,17 @@ export default class EntryAbility extends UIAbility {
         hilog.warn(DOMAIN, 'testTag', 'loginStatus failed: %{public}s', JSON.stringify(e));
       });
     }
+  }
+
+  private loadIndex(windowStage: window.WindowStage): void {
+    windowStage.loadContent('pages/Index', (err) => {
+      if (err.code) {
+        hilog.error(DOMAIN, 'testTag', 'Failed to load the content. Cause: %{public}s', JSON.stringify(err));
+        return;
+      }
+      hilog.info(DOMAIN, 'testTag', 'Succeeded in loading the content.');
+      StoreHub.markFontReady();
+    });
   }
 
   onWindowStageDestroy(): void {

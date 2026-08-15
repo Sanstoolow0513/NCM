@@ -1,7 +1,6 @@
 /**
  * 底部沉浸层占位
- * Tab 可见时与 HdsTabs 共用 tabBarBottomMargin（视觉缝，不含手势条）；
- * Tab 隐藏时才用手势条高度，避免详情页可点区域压到小白条
+ * 窗口全屏后 Tab / 迷你条都要加上手势条高度；Tab 可见时 barBottomMargin = 视觉缝 + 手势条
  */
 import {
   MINIPLAYER_GAP, MINIPLAYER_HEIGHT, NAV_INDICATOR_PAD, TAB_BAR_BOTTOM_GAP, TAB_BAR_HEIGHT
@@ -11,16 +10,18 @@ import {
 export class ChromeInsets {
   @Trace tabBarVisible: boolean = true;
   @Trace tabBarHeight: number = TAB_BAR_HEIGHT;
-  /** 与 HdsTabs.barFloatingStyle.barBottomMargin 同一数值 */
-  @Trace tabBarBottomMargin: number = TAB_BAR_BOTTOM_GAP;
+  /** 与 HdsTabs.barFloatingStyle.barBottomMargin 同一数值（含手势条） */
+  @Trace tabBarBottomMargin: number = TAB_BAR_BOTTOM_GAP + NAV_INDICATOR_PAD;
   @Trace safeBottom: number = NAV_INDICATOR_PAD;
+  /** 状态栏 / 挖孔高度 */
+  @Trace safeTop: number = 0;
   @Trace miniPlayerVisible: boolean = false;
   @Trace miniPlayerHeight: number = MINIPLAYER_HEIGHT;
   @Trace gap: number = MINIPLAYER_GAP;
   /** 迷你播放条下方需要抬起的高度 */
-  @Trace liftBelowPlayer: number = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP + MINIPLAYER_GAP;
+  @Trace liftBelowPlayer: number = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP + NAV_INDICATOR_PAD + MINIPLAYER_GAP;
   /** 列表/滚动区滚到底时避让底部悬浮层的偏移 */
-  @Trace listEndOffset: number = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP;
+  @Trace listEndOffset: number = TAB_BAR_HEIGHT + TAB_BAR_BOTTOM_GAP + NAV_INDICATOR_PAD;
 
   setTabBarVisible(visible: boolean): void {
     if (visible === this.tabBarVisible) {
@@ -37,6 +38,14 @@ export class ChromeInsets {
     }
     this.safeBottom = safe;
     this.sync();
+  }
+
+  setSafeTop(vp: number): void {
+    const top: number = vp > 0 ? vp : 0;
+    if (top === this.safeTop) {
+      return;
+    }
+    this.safeTop = top;
   }
 
   setMiniPlayerVisible(visible: boolean): void {
@@ -56,6 +65,7 @@ export class ChromeInsets {
   }
 
   sync(): void {
+    this.tabBarBottomMargin = TAB_BAR_BOTTOM_GAP + this.safeBottom;
     let lift: number = this.gap;
     if (this.tabBarVisible) {
       lift = lift + this.tabBarBottomMargin + this.tabBarHeight;

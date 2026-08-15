@@ -14,8 +14,9 @@ import { SessionSnapshot } from '../store/SessionSnapshot';
 import { LikeService } from '../service/like/LikeService';
 import { RouteName } from '../common/router/RouteName';
 import { PlaylistRouteParam } from '../common/router/RouteParams';
-import { PAGE_BG } from '../common/utils/format';
+import { PAGE_BG, PLAYER_EXPAND_DURATION } from '../common/utils/format';
 import { ChromeInsets } from '../common/utils/ChromeInsets';
+import { ThemeSettings } from '../store/ThemeSettings';
 
 @Entry
 @ComponentV2
@@ -24,19 +25,22 @@ struct Index {
   @Provider('chromeInsets') chrome: ChromeInsets = new ChromeInsets();
   @Local player: PlayerSnapshot = StoreHub.player();
   @Local session: SessionSnapshot = StoreHub.session();
+  @Local theme: ThemeSettings = StoreHub.theme();
   @Local currentTab: number = 0;
   private tabsController: HdsTabsController = new HdsTabsController();
   private discoverTabIcon: SymbolGlyphModifier = new SymbolGlyphModifier($r('sys.symbol.square_grid_2x2'));
   private mineTabIcon: SymbolGlyphModifier = new SymbolGlyphModifier($r('sys.symbol.person'));
   private hostWindow: window.Window | undefined = undefined;
+  private onNavBar: boolean = true;
 
   aboutToAppear(): void {
     LikeService.get().onSession(this.session.loginInfo);
-    this.syncMiniPlayerVisible();
+    this.syncChrome();
     this.navStack.setInterception({
       didShow: (_from: NavDestinationContext | NavBar, to: NavDestinationContext | NavBar,
         _operation: NavigationOperation, _isAnimated: boolean) => {
-        this.chrome.setTabBarVisible(to === 'navBar');
+        this.onNavBar = to === 'navBar';
+        this.syncChrome();
       }
     });
     this.bindAvoidArea();
@@ -60,22 +64,67 @@ struct Index {
 
   @Monitor('player.currentSong', 'player.fullPlayerOpen')
   onPlayerChrome(_mon: IMonitor): void {
-    this.syncMiniPlayerVisible();
+    if (this.player.currentSong === null && this.player.fullPlayerOpen) {
+      this.player.fullPlayerOpen = false;
+    }
+    this.syncChrome();
+    this.applySystemBars();
   }
 
-  private syncMiniPlayerVisible(): void {
+  private syncChrome(): void {
+    this.chrome.setTabBarVisible(this.onNavBar && !this.player.fullPlayerOpen);
     this.chrome.setMiniPlayerVisible(this.player.currentSong !== null && !this.player.fullPlayerOpen);
+  }
+
+  private closeFullPlayer(): void {
+    if (!this.player.fullPlayerOpen) {
+      return;
+    }
+    this.getUIContext().animateTo({ duration: PLAYER_EXPAND_DURATION, curve: Curve.Friction }, () => {
+      this.player.fullPlayerOpen = false;
+    });
+  }
+
+  onBackPress(): boolean {
+    if (this.player.fullPlayerOpen) {
+      this.closeFullPlayer();
+      return true;
+    }
+    return false;
+  }
+
+  private applySystemBars(): void {
+    if (this.hostWindow === undefined) {
+      return;
+    }
+    let content: string = '#000000';
+    if (this.player.fullPlayerOpen || this.theme.mode === 'dark') {
+      content = '#FFFFFF';
+    }
+    this.hostWindow.setWindowSystemBarProperties({
+      statusBarColor: '#00000000',
+      navigationBarColor: '#00000000',
+      statusBarContentColor: content,
+      navigationBarContentColor: content
+    }).catch((err: Error) => {
+      console.error('[Index] setWindowSystemBarProperties failed: ' + JSON.stringify(err));
+    });
   }
 
   private bindAvoidArea(): void {
     const host: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
     window.getLastWindow(host).then((win: window.Window) => {
       this.hostWindow = win;
-      const avoid: window.AvoidArea = win.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR);
-      this.chrome.setSafeBottom(this.getUIContext().px2vp(avoid.bottomRect.height));
+      const bottomAvoid: window.AvoidArea = win.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR);
+      this.chrome.setSafeBottom(this.getUIContext().px2vp(bottomAvoid.bottomRect.height));
+      const systemAvoid: window.AvoidArea = win.getWindowAvoidArea(window.AvoidAreaType.TYPE_SYSTEM);
+      this.chrome.setSafeTop(this.getUIContext().px2vp(systemAvoid.topRect.height));
+      this.applySystemBars();
       win.on('avoidAreaChange', (data: window.AvoidAreaOptions) => {
         if (data.type === window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR) {
           this.chrome.setSafeBottom(this.getUIContext().px2vp(data.area.bottomRect.height));
+        } else if (data.type === window.AvoidAreaType.TYPE_SYSTEM) {
+          this.chrome.setSafeTop(this.getUIContext().px2vp(data.area.topRect.height));
         }
       });
     }).catch((err: Error) => {
@@ -102,13 +151,11 @@ struct Index {
       DailySongsPage({ navPathStack: this.navStack })
     } else if (name === RouteName.SETTINGS) {
       SettingsPage({ navPathStack: this.navStack })
-    } else if (name === RouteName.PLAYER) {
-      PlayerPage({ navPathStack: this.navStack })
     }
   }
 
   build() {
-    Stack({ alignContent: Alignment.Bottom }) {
+    Stack({ alignContent: Alignment.TopStart }) {
       Navigation(this.navStack) {
         HdsTabs({ controller: this.tabsController, index: this.currentTab }) {
           TabContent() {
@@ -144,29 +191,51 @@ struct Index {
       .clip(false)
       .width('100%')
       .height('100%')
-      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
-      .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
+      .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+      .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
 
       if (!this.player.fullPlayerOpen && this.player.currentSong !== null) {
-        Column() {
-          MiniPlayer({ navPathStack: this.navStack })
+        Stack({ alignContent: Alignment.Bottom }) {
+          Column() {
+            MiniPlayer()
+          }
+          .width('100%')
+          .alignItems(HorizontalAlign.Center)
+          .padding({ bottom: this.chrome.liftBelowPlayer })
         }
         .width('100%')
-        .alignItems(HorizontalAlign.Center)
-        .padding({ bottom: this.chrome.liftBelowPlayer })
-        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
-        .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
+        .height('100%')
         .hitTestBehavior(HitTestMode.Transparent)
-        .transition(TransitionEffect.OPACITY
-          .combine(TransitionEffect.translate({ y: 24 }))
-          .animation({ duration: 200, curve: Curve.EaseOut }))
+        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+        .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
+        .transition(TransitionEffect.OPACITY.animation({
+          duration: PLAYER_EXPAND_DURATION,
+          curve: Curve.Friction
+        }))
         .animation({ curve: curves.springMotion() })
+      }
+
+      if (this.player.fullPlayerOpen) {
+        Column() {
+          PlayerPage()
+        }
+        .width('100%')
+        .height('100%')
+        .backgroundColor(Color.Black)
+        .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+        .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
+        .clip(false)
+        .transition(TransitionEffect.asymmetric(
+          TransitionEffect.opacity(0.99).animation({ duration: PLAYER_EXPAND_DURATION, curve: Curve.Friction }),
+          TransitionEffect.OPACITY.animation({ duration: PLAYER_EXPAND_DURATION, curve: Curve.Friction })
+        ))
       }
     }
     .width('100%')
     .height('100%')
+    .clip(false)
     .backgroundColor(PAGE_BG)
-    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
-    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
+    .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.TOP, SafeAreaEdge.BOTTOM])
+    .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.TOP, LayoutSafeAreaEdge.BOTTOM])
   }
 }

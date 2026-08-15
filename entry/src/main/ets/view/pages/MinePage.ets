@@ -195,6 +195,7 @@ export struct MinePage {
     }
     .width('100%')
     .height('100%')
+    .padding({ top: this.chrome.safeTop })
     .backgroundColor(PAGE_BG)
   }
 }

@@ -9,9 +9,9 @@ export class PlayerViewModel {
   @Trace activeLine: number = -1;
 
   async loadLyric(song: SongInfo | null): Promise<void> {
-    this.lyrics = [];
-    this.activeLine = -1;
     if (song === null) {
+      this.lyrics = [];
+      this.activeLine = -1;
       return;
     }
     const songId = song.id;
@@ -20,6 +20,7 @@ export class PlayerViewModel {
       const cur = StoreHub.player().currentSong;
       if (cur !== null && cur.id === songId) {
         this.lyrics = lines;
+        this.updateActiveLine(StoreHub.player().positionMs);
       }
     } catch (e) {
       console.error(`[PlayerViewModel] load lyric failed: ${JSON.stringify(e)}`);
