@@ -59,3 +59,20 @@ export function jArr(obj: Object | null, path: string[]): Object[] {
   }
   return [];
 }
+
+/** 解析 JSON 数字数组（如喜欢歌曲 ids），元素不是数字/数字字符串则跳过 */
+export function jNumArr(obj: Object | null, path: string[]): number[] {
+  const items = jArr(obj, path);
+  const out: number[] = [];
+  for (const item of items) {
+    if (typeof item === 'number') {
+      out.push(item as number);
+    } else if (typeof item === 'string') {
+      const n = Number(item);
+      if (!Number.isNaN(n)) {
+        out.push(n);
+      }
+    }
+  }
+  return out;
+}

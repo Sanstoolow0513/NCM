@@ -200,7 +200,6 @@ export struct DiscoverPage {
             SongRow({
               song: song,
               songIndex: songIndex,
-              showIndex: true,
               onTap: (idx: number) => {
                 this.dailyVm.playAt(idx);
               }

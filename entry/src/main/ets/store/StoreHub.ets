@@ -2,10 +2,12 @@ import { AppStorageV2, PersistenceV2 } from '@kit.ArkUI';
 import { common, ConfigurationConstant } from '@kit.AbilityKit';
 import { PlayerSnapshot } from './PlayerSnapshot';
 import { SessionSnapshot } from './SessionSnapshot';
+import { LikeSnapshot } from './LikeSnapshot';
 import { ThemeSettings } from './ThemeSettings';
 
 const KEY_PLAYER: string = 'PlayerSnapshot';
 const KEY_SESSION: string = 'SessionSnapshot';
+const KEY_LIKES: string = 'LikeSnapshot';
 const KEY_THEME: string = 'ThemeSettings';
 
 export class StoreHub {
@@ -18,6 +20,10 @@ export class StoreHub {
 
   static session(): SessionSnapshot {
     return AppStorageV2.connect<SessionSnapshot>(SessionSnapshot, KEY_SESSION, () => new SessionSnapshot())!;
+  }
+
+  static likes(): LikeSnapshot {
+    return AppStorageV2.connect<LikeSnapshot>(LikeSnapshot, KEY_LIKES, () => new LikeSnapshot())!;
   }
 
   static theme(): ThemeSettings {

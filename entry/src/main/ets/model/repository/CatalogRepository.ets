@@ -1,5 +1,5 @@
 import { NcmHttp } from '../source/NcmHttp';
-import { jArr, jNum, jStr } from '../source/json';
+import { jArr, jNum, jNumArr, jStr } from '../source/json';
 import { parseSong, parseSongList } from '../source/NcmParsers';
 import { BannerInfo, PlayListDetail, SongInfo, SongListInfo } from '../entity/models';
 
@@ -121,5 +121,29 @@ export class CatalogRepository {
       detail.songs.push(s);
     }
     return detail;
+  }
+
+  /** 当前账号喜欢的歌曲 id（无序） */
+  async likedIds(uid: number): Promise<number[]> {
+    const p: Record<string, string> = { 'uid': uid.toString() };
+    const res = await NcmHttp.get().request('/weapi/song/like/get', p, false, true);
+    const obj = JSON.parse(res) as Object;
+    if (jNum(obj, ['code']) !== 200) {
+      throw new Error(`获取喜欢列表失败 code=${jNum(obj, ['code'])}`);
+    }
+    return jNumArr(obj, ['ids']);
+  }
+
+  /** 红心 / 取消红心，写入「我喜欢的音乐」 */
+  async setSongLike(trackId: number, like: boolean): Promise<void> {
+    const p: Record<string, string> = {
+      'trackId': trackId.toString(),
+      'like': like ? 'true' : 'false'
+    };
+    const res = await NcmHttp.get().request('/weapi/radio/like', p, false, true);
+    const obj = JSON.parse(res) as Object;
+    if (jNum(obj, ['code']) !== 200) {
+      throw new Error(`红心操作失败 code=${jNum(obj, ['code'])}`);
+    }
   }
 }

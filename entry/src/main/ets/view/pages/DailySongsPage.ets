@@ -88,7 +88,6 @@ export struct DailySongsPage {
                 SongRow({
                   song: song,
                   songIndex: songIndex,
-                  showIndex: true,
                   onTap: (idx: number) => {
                     this.vm.playAt(idx);
                   }

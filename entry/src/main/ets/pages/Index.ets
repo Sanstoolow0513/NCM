@@ -10,6 +10,8 @@ import { PlaylistDetailPage } from '../view/pages/PlaylistDetailPage';
 import { SettingsPage } from '../view/pages/SettingsPage';
 import { StoreHub } from '../store/StoreHub';
 import { PlayerSnapshot } from '../store/PlayerSnapshot';
+import { SessionSnapshot } from '../store/SessionSnapshot';
+import { LikeService } from '../service/like/LikeService';
 import { RouteName } from '../common/router/RouteName';
 import { PlaylistRouteParam } from '../common/router/RouteParams';
 import { PAGE_BG } from '../common/utils/format';
@@ -21,6 +23,7 @@ struct Index {
   @Provider('navStack') navStack: NavPathStack = new NavPathStack();
   @Provider('chromeInsets') chrome: ChromeInsets = new ChromeInsets();
   @Local player: PlayerSnapshot = StoreHub.player();
+  @Local session: SessionSnapshot = StoreHub.session();
   @Local currentTab: number = 0;
   private tabsController: HdsTabsController = new HdsTabsController();
   private discoverTabIcon: SymbolGlyphModifier = new SymbolGlyphModifier($r('sys.symbol.square_grid_2x2'));
@@ -28,6 +31,7 @@ struct Index {
   private hostWindow: window.Window | undefined = undefined;
 
   aboutToAppear(): void {
+    LikeService.get().onSession(this.session.loginInfo);
     this.syncMiniPlayerVisible();
     this.navStack.setInterception({
       didShow: (_from: NavDestinationContext | NavBar, to: NavDestinationContext | NavBar,
@@ -40,6 +44,11 @@ struct Index {
 
   aboutToDisappear(): void {
     this.unbindAvoidArea();
+  }
+
+  @Monitor('session.loginInfo')
+  onSessionChange(_mon: IMonitor): void {
+    LikeService.get().onSession(this.session.loginInfo);
   }
 
   @Monitor('player.toastSeq')
