@@ -47,6 +47,12 @@ export const MINIPLAYER_BG = $r('app.color.miniplayer_bg');
 export const BLUR_SCRIM = $r('app.color.blur_scrim');
 /** 底部手势条（小白条）占位，沉浸后把可点内容抬到条上方 */
 export const NAV_INDICATOR_PAD: number = 20;
+/** 底部悬浮 Tab 栏默认高度（Hds BottomTabBarStyle），实际抬升以窗口避让区与导航栈为准 */
+export const TAB_BAR_HEIGHT: number = 56;
+/** 迷你播放条高度 */
+export const MINIPLAYER_HEIGHT: number = 56;
+/** 迷你播放条与 Tab 栏 / 底部安全区之间的间隙 */
+export const MINIPLAYER_GAP: number = 8;
 
 /** 圆角梯度 */
 export const RADIUS_S: number = 8;

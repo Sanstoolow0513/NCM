@@ -5,6 +5,7 @@
 import { SongInfo } from '../../model/entity/models';
 import { DailySongsViewModel } from '../../viewmodel/DailySongsViewModel';
 import { SongRow } from '../components/SongRow';
+import { ChromeInsets } from '../../common/utils/ChromeInsets';
 import {
   ACCENT_COLOR, ON_ACCENT, PAGE_BG, PAGE_PAD, SPACE_L, SPACE_M, SPACE_S, TEXT_SECONDARY
 } from '../../common/utils/format';
@@ -12,6 +13,7 @@ import {
 @ComponentV2
 export struct DailySongsPage {
   @Param navPathStack: NavPathStack = new NavPathStack();
+  @Consumer('chromeInsets') chrome: ChromeInsets = new ChromeInsets();
   @Local vm: DailySongsViewModel = new DailySongsViewModel();
 
   aboutToAppear(): void {
@@ -97,7 +99,7 @@ export struct DailySongsPage {
           .layoutWeight(1)
           .width('100%')
           .scrollBar(BarState.Off)
-          .contentEndOffset(120)
+          .contentEndOffset(this.chrome.listEndOffset)
           .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
           .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
         }

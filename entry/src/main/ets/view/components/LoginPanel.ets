@@ -3,6 +3,7 @@
  * 扫码 / 手机号（验证码或密码）两种登录方式，统一卡片化容器与胶囊按钮样式
  */
 import { LoginViewModel } from '../../viewmodel/LoginViewModel';
+import { ChromeInsets } from '../../common/utils/ChromeInsets';
 import {
   ACCENT_COLOR, ACCENT_SOFT, CARD_BG, ON_ACCENT, PAGE_BG, RADIUS_M, RADIUS_XL, SPACE_L, SPACE_M, SPACE_S, SPACE_XL,
   TEXT_PRIMARY, TEXT_SECONDARY
@@ -10,6 +11,7 @@ import {
 
 @ComponentV2
 export struct LoginPanel {
+  @Consumer('chromeInsets') chrome: ChromeInsets = new ChromeInsets();
   @Local vm: LoginViewModel = new LoginViewModel();
 
   aboutToDisappear(): void {
@@ -203,6 +205,6 @@ export struct LoginPanel {
     .layoutWeight(1)
     .justifyContent(FlexAlign.Center)
     .width('100%')
-    .padding({ left: SPACE_XL, right: SPACE_XL, bottom: 80 })
+    .padding({ left: SPACE_XL, right: SPACE_XL, bottom: this.chrome.listEndOffset })
   }
 }

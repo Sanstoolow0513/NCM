@@ -5,6 +5,7 @@
 import { SongInfo } from '../../model/entity/models';
 import { PlaylistDetailViewModel } from '../../viewmodel/PlaylistDetailViewModel';
 import { SongRow } from '../components/SongRow';
+import { ChromeInsets } from '../../common/utils/ChromeInsets';
 import {
   ACCENT_COLOR, BLUR_SCRIM, ON_ACCENT, PAGE_BG, PAGE_PAD, RADIUS_M, SPACE_L, SPACE_M, SPACE_S, TEXT_PRIMARY,
   TEXT_SECONDARY
@@ -15,6 +16,7 @@ export struct PlaylistDetailPage {
   @Param navPathStack: NavPathStack = new NavPathStack();
   @Param listId: number = 0;
   @Param isAlbum: boolean = false;
+  @Consumer('chromeInsets') chrome: ChromeInsets = new ChromeInsets();
   @Local vm: PlaylistDetailViewModel = new PlaylistDetailViewModel();
 
   aboutToAppear(): void {
@@ -147,7 +149,7 @@ export struct PlaylistDetailPage {
           .layoutWeight(1)
           .width('100%')
           .scrollBar(BarState.Off)
-          .contentEndOffset(120)
+          .contentEndOffset(this.chrome.listEndOffset)
           .expandSafeArea([SafeAreaType.SYSTEM], [SafeAreaEdge.BOTTOM])
           .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
         }

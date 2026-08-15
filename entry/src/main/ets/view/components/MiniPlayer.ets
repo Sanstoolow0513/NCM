@@ -1,18 +1,20 @@
 /**
  * 全局迷你播放器悬浮条
- * 材质模糊胶囊 + 底部播放进度细条，点击封面/文字区进入完整播放页
+ * 材质模糊胶囊 + 底部播放进度细条，点击进入完整播放页；高度上报给底部沉浸占位
  */
 import { PlayerService } from '../../service/player/PlayerService';
 import { StoreHub } from '../../store/StoreHub';
 import { PlayerSnapshot } from '../../store/PlayerSnapshot';
 import { RouteName } from '../../common/router/RouteName';
+import { ChromeInsets } from '../../common/utils/ChromeInsets';
 import {
-  ACCENT_COLOR, COVER_PLACEHOLDER, MINIPLAYER_BG, NAV_INDICATOR_PAD, RADIUS_S, TEXT_PRIMARY, TEXT_SECONDARY
+  ACCENT_COLOR, COVER_PLACEHOLDER, MINIPLAYER_BG, RADIUS_S, TEXT_PRIMARY, TEXT_SECONDARY
 } from '../../common/utils/format';
 
 @ComponentV2
 export struct MiniPlayer {
   @Param navPathStack: NavPathStack = new NavPathStack();
+  @Consumer('chromeInsets') chrome: ChromeInsets = new ChromeInsets();
   @Local player: PlayerSnapshot = StoreHub.player();
 
   private openPlayer(): void {
@@ -81,14 +83,13 @@ export struct MiniPlayer {
     }
     .width('94%')
     .height(56)
-    .margin({ bottom: 64 + NAV_INDICATOR_PAD })
     .borderRadius(28)
     .clip(true)
     .backgroundColor(MINIPLAYER_BG)
     .backgroundBlurStyle(BlurStyle.Regular)
     .shadow({ radius: 12, color: '#33000000', offsetY: 2 })
-    .transition(TransitionEffect.OPACITY
-      .combine(TransitionEffect.translate({ y: 24 }))
-      .animation({ duration: 200, curve: Curve.EaseOut }))
+    .onAreaChange((_oldValue: Area, newValue: Area) => {
+      this.chrome.setMiniPlayerHeight(newValue.height as number);
+    })
   }
 }

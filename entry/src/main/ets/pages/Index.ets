@@ -1,5 +1,6 @@
 import { HdsTabs, HdsTabsController, hdsMaterial } from '@kit.UIDesignKit';
-import { SymbolGlyphModifier } from '@kit.ArkUI';
+import { SymbolGlyphModifier, curves, window } from '@kit.ArkUI';
+import { common } from '@kit.AbilityKit';
 import { MiniPlayer } from '../view/components/MiniPlayer';
 import { DailySongsPage } from '../view/pages/DailySongsPage';
 import { DiscoverPage } from '../view/pages/DiscoverPage';
@@ -12,23 +13,73 @@ import { StoreHub } from '../store/StoreHub';
 import { PlayerSnapshot } from '../store/PlayerSnapshot';
 import { RouteName } from '../common/router/RouteName';
 import { PlaylistRouteParam } from '../common/router/RouteParams';
-import { NAV_INDICATOR_PAD, PAGE_BG } from '../common/utils/format';
+import { PAGE_BG } from '../common/utils/format';
+import { ChromeInsets } from '../common/utils/ChromeInsets';
 
 @Entry
 @ComponentV2
 struct Index {
   @Provider('navStack') navStack: NavPathStack = new NavPathStack();
+  @Provider('chromeInsets') chrome: ChromeInsets = new ChromeInsets();
   @Local player: PlayerSnapshot = StoreHub.player();
   @Local currentTab: number = 0;
   private tabsController: HdsTabsController = new HdsTabsController();
   private discoverTabIcon: SymbolGlyphModifier = new SymbolGlyphModifier($r('sys.symbol.square_grid_2x2'));
   private searchTabIcon: SymbolGlyphModifier = new SymbolGlyphModifier($r('sys.symbol.magnifyingglass'));
   private mineTabIcon: SymbolGlyphModifier = new SymbolGlyphModifier($r('sys.symbol.person'));
+  private hostWindow: window.Window | undefined = undefined;
+
+  aboutToAppear(): void {
+    this.syncMiniPlayerVisible();
+    this.navStack.setInterception({
+      didShow: (_from: NavDestinationContext | NavBar, to: NavDestinationContext | NavBar,
+        _operation: NavigationOperation, _isAnimated: boolean) => {
+        this.chrome.setTabBarVisible(to === 'navBar');
+      }
+    });
+    this.bindAvoidArea();
+  }
+
+  aboutToDisappear(): void {
+    this.unbindAvoidArea();
+  }
 
   @Monitor('player.toastSeq')
   onPlayerToast(_mon: IMonitor): void {
     if (this.player.toastMessage.length > 0) {
       this.getUIContext().getPromptAction().showToast({ message: this.player.toastMessage });
+    }
+  }
+
+  @Monitor('player.currentSong', 'player.fullPlayerOpen')
+  onPlayerChrome(_mon: IMonitor): void {
+    this.syncMiniPlayerVisible();
+  }
+
+  private syncMiniPlayerVisible(): void {
+    this.chrome.setMiniPlayerVisible(this.player.currentSong !== null && !this.player.fullPlayerOpen);
+  }
+
+  private bindAvoidArea(): void {
+    const host: common.UIAbilityContext = this.getUIContext().getHostContext() as common.UIAbilityContext;
+    window.getLastWindow(host).then((win: window.Window) => {
+      this.hostWindow = win;
+      const avoid: window.AvoidArea = win.getWindowAvoidArea(window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR);
+      this.chrome.setSafeBottom(this.getUIContext().px2vp(avoid.bottomRect.height));
+      win.on('avoidAreaChange', (data: window.AvoidAreaOptions) => {
+        if (data.type === window.AvoidAreaType.TYPE_NAVIGATION_INDICATOR) {
+          this.chrome.setSafeBottom(this.getUIContext().px2vp(data.area.bottomRect.height));
+        }
+      });
+    }).catch((err: Error) => {
+      console.error('[Index] getLastWindow failed: ' + JSON.stringify(err));
+    });
+  }
+
+  private unbindAvoidArea(): void {
+    if (this.hostWindow !== undefined) {
+      this.hostWindow.off('avoidAreaChange');
+      this.hostWindow = undefined;
     }
   }
 
@@ -72,7 +123,7 @@ struct Index {
         .vertical(false)
         .barOverlap(true)
         .barFloatingStyle({
-          barBottomMargin: NAV_INDICATOR_PAD,
+          barBottomMargin: this.chrome.safeBottom,
           systemMaterialEffect: {
             materialType: hdsMaterial.MaterialType.IMMERSIVE,
             materialLevel: hdsMaterial.MaterialLevel.ADAPTIVE
@@ -95,7 +146,17 @@ struct Index {
       .ignoreLayoutSafeArea([LayoutSafeAreaType.SYSTEM], [LayoutSafeAreaEdge.BOTTOM])
 
       if (!this.player.fullPlayerOpen && this.player.currentSong !== null) {
-        MiniPlayer({ navPathStack: this.navStack })
+        Column() {
+          MiniPlayer({ navPathStack: this.navStack })
+        }
+        .width('100%')
+        .alignItems(HorizontalAlign.Center)
+        .padding({ bottom: this.chrome.liftBelowPlayer })
+        .hitTestBehavior(HitTestMode.Transparent)
+        .transition(TransitionEffect.OPACITY
+          .combine(TransitionEffect.translate({ y: 24 }))
+          .animation({ duration: 200, curve: Curve.EaseOut }))
+        .animation({ curve: curves.springMotion() })
       }
     }
     .width('100%')
