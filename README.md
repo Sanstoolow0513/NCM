@@ -19,12 +19,12 @@ HarmonyOS 第三方网易云音乐客户端，用 ArkTS + ArkUI（Stage 模型�
 ## 环境
 
 - 设备：手机
-- SDK：HarmonyOS 6.1.1（API 24）
+- SDK：HarmonyOS 26.0.0（API 26）
 - 包名：`sanstoolow.netesohm.huawei`
 
 ## 构建
 
-用 [DevEco Studio](https://developer.huawei.com/consumer/cn/deveco-studio/) 打开本仓库，配置自动签名后连接真机或模拟器（API 24+）运行。
+用 [DevEco Studio](https://developer.huawei.com/consumer/cn/deveco-studio/) 打开本仓库，配置自动签名后连接真机或模拟器（API 26+）运行。
 
 命令行请在已安装 DevEco CLI 且可使用 DevEco `ohpm` 的环境中执行。本仓库不包含 `hvigorw` 包装脚本：
 

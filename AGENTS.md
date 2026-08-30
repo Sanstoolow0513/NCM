@@ -7,7 +7,7 @@
 这是一个 **HarmonyOS（鸿蒙）第三方网易云音乐（NCM）客户端**，使用 ArkTS + ArkUI 开发，Stage 模型（`apiType: "stageMode"`）。
 
 - 包名：`sanstoolow.netesohm.huawei`（见 `AppScope/app.json5`），版本 `1.0.0`
-- SDK：`targetSdkVersion` / `compatibleSdkVersion` 均为 `6.1.1(24)`（API 24），`runtimeOS: HarmonyOS`
+- SDK：`targetSdkVersion` / `compatibleSdkVersion` 均为 `26.0.0`（API 26），`runtimeOS: HarmonyOS`
 - 设备类型：仅 `phone`
 - 界面语言：中文；代码注释主要使用中文，新增注释请保持一致
 - 只有一个模块：`entry`（`build-profile.json5`）
@@ -30,7 +30,7 @@
 - 构建 HAP：`hvigorw assembleHap --mode module -p product=default`（或 `assembleApp` 打 APP 包）
 - 构建模式：`debug` / `release`（见根 `build-profile.json5` 的 `buildModeSet`）；release 混淆默认关闭（`entry/build-profile.json5`，规则文件 `entry/obfuscation-rules.txt`）
 - 签名：`signingConfigs` 为空，真机运行需在 DevEco Studio 中配置自动签名
-- 运行 / 调试：DevEco Studio 连接真机或模拟器（API 24+）
+- 运行 / 调试：DevEco Studio 连接真机或模拟器（API 26+）
 
 ## 代码结构（`entry/src/main/ets/`）
 
@@ -77,7 +77,6 @@
 | `hmos-instrument-test` | 写/跑仪器测试（真机或模拟器上的集成测试） | 同上目录与框架；本应用无 C++，不要按技能去加 Native/ASan 流程 |
 
 明确不装（与本应用无关或会带偏）：V1→V2 迁移、多设备总入口/折叠/外设、华为账号一键登录、Scan Kit（登录二维码是网易云 `QRCode` 展示给官方 App 扫，不是本机扫码）、Push/实况窗、元服务/ASCF、Native 崩溃分析。需要时再按任务临时加，不要预装。
-
 ## 测试
 
 - 已配置测试基建但**尚无测试代码**：`entry/build-profile.json5` 声明了 `ohosTest` target，`@ohos/hypium` / `@ohos/hamock` 已在 devDependencies。新增单元测试走 `hmos-local-test`，仪器测试走 `hmos-instrument-test`；代码放在 `entry/src/ohosTest/`（框架为 Hypium，风格为 `describe/it/expect`）
