@@ -108,7 +108,8 @@ export class NcmHttp {
           'User-Agent': USER_AGENT,
           'Accept': '*/*'
         },
-        extraData: body,
+        body: body,
+        usingCache: false,
         connectTimeout: 15000,
         readTimeout: 15000
       });
